@@ -1,9 +1,12 @@
+package cls;
+
+
 public class FieldInfo {
 
-  final int accessFlags;
-  final int nameIndex;
-  final int descriptorIndex;
-  final AttributeInfo[] attributes;
+  public final int accessFlags;
+  public final int nameIndex;
+  public final int descriptorIndex;
+  public final AttributeInfo[] attributes;
 
   public FieldInfo(
       int accessFlags,

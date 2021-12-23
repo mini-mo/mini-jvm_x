@@ -1,7 +1,9 @@
+package cls;
+
 public class AttributeInfo {
 
-  final int attributeNameIndex;
-  final byte[] info;
+  public final int attributeNameIndex;
+  public final byte[] info;
 
   public AttributeInfo(
       int attributeNameIndex,

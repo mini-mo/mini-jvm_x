@@ -1,21 +1,25 @@
+package core;
+
+import cls.CpInfo;
+
 public abstract class Resolver {
 
-  static int u2(byte[] raw) {
+  public static int u2(byte[] raw) {
     return u2(raw, 0);
   }
 
-  static int u2(
+  public static int u2(
       byte[] raw,
       int offset
   ) {
     return (raw[offset] << 8) + (raw[offset + 1] << 0);
   }
 
-  static int u4(byte[] raw) {
+  public static int u4(byte[] raw) {
     return u4(raw, 0);
   }
 
-  static int u4(
+  public static int u4(
       byte[] raw,
       int offset
   ) {
@@ -23,28 +27,28 @@ public abstract class Resolver {
         (raw[offset++] & 0xff) << 0));
   }
 
-  static String className(
+  public static String className(
       int idx,
       CpInfo[] cp
   ) {
     return utf8(u2(cp[idx].info), cp);
   }
 
-  static String methodName(
+  public static String methodName(
       int idx,
       CpInfo[] cp
   ) {
     return utf8(u2(cp[idx].info), cp);
   }
 
-  static String methodDescriptor(
+  public static String methodDescriptor(
       int idx,
       CpInfo[] cp
   ) {
     return utf8(u2(cp[idx].info, 2), cp);
   }
 
-  static String utf8(
+  public static String utf8(
       int idx,
       CpInfo[] cp
   ) {
@@ -56,7 +60,7 @@ public abstract class Resolver {
       int offset,
       int size
   ) {
-    final byte[] bytes = new byte[size];
+    var bytes = new byte[size];
     for (int i = 0; i < size; i++) {
       bytes[i] = raw[offset++];
     }

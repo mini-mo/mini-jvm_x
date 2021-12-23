@@ -1,3 +1,12 @@
+import cls.AttributeInfo;
+import cls.ClassReader;
+import cls.CpInfo;
+import cls.MethodInfo;
+import core.Const;
+import core.Flags;
+import core.Frame;
+import core.Interpreter;
+import core.Resolver;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -14,20 +23,20 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-      final File file = new File(args[0]);
-      final FileInputStream fis = new FileInputStream(file);
-      final byte[] bytes = fis.readAllBytes();
-      final ClassReader reader = new ClassReader(bytes);
-      final ClassFile cf = reader.read();
-      final CpInfo[] cp = cf.cp;
+      var file = new File(args[0]);
+      var fis = new FileInputStream(file);
+      var bytes = fis.readAllBytes();
+      var reader = new ClassReader(bytes);
+      var cf = reader.read();
+      var cp = cf.cp;
 
       // basic
       echo("public class ".concat(Resolver.className(cf.thisClass, cp)));
       echo("  minor version: " + cf.minorVersion);
       echo("  major version: " + cf.majorVersion);
       {
-        String flags = String.format("  flags: (0x%04x)", cf.accessFlags);
-        boolean comm = false;
+        var flags = String.format("  flags: (0x%04x)", cf.accessFlags);
+        var comm = false;
         if (Flags.isAccPublic(cf.accessFlags)) {
           flags = flags.concat(" ACC_PUBLIC");
           comm = true;
@@ -43,9 +52,9 @@ public class Main {
         echo(flags);
       }
       {
-        final String ts = String.format("  %-40s", "this_class: ".concat("#").concat(String.format("%d", cf.thisClass)))
+        var ts = String.format("  %-40s", "this_class: ".concat("#").concat(String.format("%d", cf.thisClass)))
             .concat("// ").concat(Resolver.className(cf.thisClass, cp));
-        final String sc = String.format("  %-40s",
+        var sc = String.format("  %-40s",
                                         "super_class: ".concat("#").concat(String.format("%d", cf.superClass)))
             .concat("// ").concat(Resolver.className(cf.superClass, cp));
         echo(ts);
@@ -61,25 +70,25 @@ public class Main {
       // cp
       {
         echo("Constant pool:");
-        int pad = 2;
-        int tmp = cp.length;
+        var pad = 2;
+        var tmp = cp.length;
         while (tmp / 10 > 0) {
           pad++;
           tmp = tmp / 10;
         }
-        final String bif = String.format("%d", pad);
+        var bif = String.format("%d", pad);
         for (int i = 1; i < cp.length; i++) {
-          final CpInfo ci = cp[i];
-          final String h = "  ".concat(String.format("%".concat(bif).concat("s"), String.format("#%d", i)))
+          var ci = cp[i];
+          var h = "  ".concat(String.format("%".concat(bif).concat("s"), String.format("#%d", i)))
               .concat(" = ");
           switch (ci.tag) {
             case Const.CONSTANT_Methodref -> {
-              String cm = String.format("%-26s", h.concat("Methodref"));
-              String t = String.format("#%d", Resolver.u2(ci.info));
+              var cm = String.format("%-26s", h.concat("Methodref"));
+              var t = String.format("#%d", Resolver.u2(ci.info));
               t = t.concat(String.format(".#%d", Resolver.u2(ci.info, 2)));
               cm = cm.concat(String.format("%-15s", t));
               cm = cm.concat("// ").concat(Resolver.className(Resolver.u2(ci.info), cp)).concat(".");
-              String mn = Resolver.methodName(Resolver.u2(ci.info, 2), cp);
+              var mn = Resolver.methodName(Resolver.u2(ci.info, 2), cp);
               if (mn.startsWith("<")) {
                 mn = "\"".concat(mn).concat("\"");
               }
@@ -87,19 +96,19 @@ public class Main {
               echo(cm);
             }
             case Const.CONSTANT_Class -> {
-              String cc = String.format("%-26s", h.concat("Class"));
+              var cc = String.format("%-26s", h.concat("Class"));
               cc = cc.concat(String.format("%-15s", String.format("#%d", Resolver.u2(ci.info))));
               cc = cc.concat("// ").concat(Resolver.className(i, cp));
 
               echo(cc);
             }
             case Const.CONSTANT_NameAndType -> {
-              String cm = String.format("%-26s", h.concat("NameAndType"));
-              String t = String.format("#%d", Resolver.u2(ci.info));
+              var cm = String.format("%-26s", h.concat("NameAndType"));
+              var t = String.format("#%d", Resolver.u2(ci.info));
               t = t.concat(String.format(":#%d", Resolver.u2(ci.info, 2)));
               cm = cm.concat(String.format("%-15s", t));
 
-              String mn = Resolver.utf8(Resolver.u2(ci.info), cp);
+              var mn = Resolver.utf8(Resolver.u2(ci.info), cp);
               if (mn.startsWith("<")) {
                 mn = "\"".concat(mn).concat("\"");
               }
@@ -108,7 +117,7 @@ public class Main {
               echo(cm);
             }
             case Const.CONSTANT_Utf8 -> {
-              String cm = String.format("%-26s", h.concat("Utf8"));
+              var cm = String.format("%-26s", h.concat("Utf8"));
               cm = cm.concat(Resolver.utf8(i, cp));
               echo(cm);
             }
@@ -124,7 +133,7 @@ public class Main {
         {
           for (MethodInfo method : cf.methods) {
             var h = "";
-            boolean b = false;
+            var b = false;
             if (Flags.isAccPublic(method.accessFlags)) {
               h = h.concat("public");
               b = true;
@@ -138,9 +147,9 @@ public class Main {
               }
             }
 
-            final String descriptor = Resolver.utf8(method.descriptorIndex, cp);
-            final String p = descriptor.substring(1, descriptor.indexOf(")"));
-            final String r = descriptor.substring(descriptor.indexOf(")") + 1);
+            var descriptor = Resolver.utf8(method.descriptorIndex, cp);
+            var p = descriptor.substring(1, descriptor.indexOf(")"));
+            var r = descriptor.substring(descriptor.indexOf(")") + 1);
 
             if (!r.equals("V")) {
               boolean comm = false;
@@ -150,19 +159,19 @@ public class Main {
               }
             }
 
-            final String name = Resolver.utf8(method.nameIndex, cp);
+            var name = Resolver.utf8(method.nameIndex, cp);
             if (name.equals("<init>")) {
               h = h.concat(" ").concat(Resolver.className(cf.thisClass, cp));
             } else {
               h = h.concat(" ").concat(name);
             }
 
-            int as = 1;
+            var as = 1;
             if (p.equals("")) {
               h = h.concat("()");
             } else {
               h = h.concat("(");
-              boolean comm = false;
+              var comm = false;
               for (int i = 0; i < p.length(); i++) {
                 if (i > 0) {
                   comm = true;
@@ -211,33 +220,33 @@ public class Main {
             }
 
             // code
-            for (AttributeInfo attribute : method.attributes) {
+            for (var attribute : method.attributes) {
               final String an = Resolver.utf8(attribute.attributeNameIndex, cp);
               if (an.equals("Code")) {
-                final byte[] raw = attribute.info;
-                int offset = 0;
-                final int ms = Resolver.u2(raw, offset);
+                var raw = attribute.info;
+                var offset = 0;
+                var ms = Resolver.u2(raw, offset);
                 offset += 2;
-                final int ml = Resolver.u2(raw, offset);
+                var ml = Resolver.u2(raw, offset);
                 offset += 2;
 
-                final int clen = Resolver.u4(raw, offset);
+                var clen = Resolver.u4(raw, offset);
                 offset += 4;
-                byte[] code = Resolver.raw(raw, offset, clen);
+                var code = Resolver.raw(raw, offset, clen);
                 offset += clen;
 
-                final int etl = Resolver.u2(raw, offset);
+                var etl = Resolver.u2(raw, offset);
                 offset += 2;
                 // TODO exception table
-                final int ac = Resolver.u2(raw, offset);
+                var ac = Resolver.u2(raw, offset);
                 offset += 2;
-                final AttributeInfo[] cais = new AttributeInfo[ac];
+                final var cais = new AttributeInfo[ac];
                 for (int i = 0; i < ac; i++) {
-                  final int ni = Resolver.u2(raw, offset);
+                  var ni = Resolver.u2(raw, offset);
                   offset += 2;
-                  final int al = Resolver.u4(raw, offset);
+                  var al = Resolver.u4(raw, offset);
                   offset += 4;
-                  final byte[] ab = Resolver.raw(raw, offset, al);
+                  var ab = Resolver.raw(raw, offset, al);
                   offset += al;
                   cais[i] = new AttributeInfo(ni, ab);
                 }
@@ -247,10 +256,10 @@ public class Main {
                 echo("      ".concat(ch));
 
                 // instructions
-                int co = 0;
-                final int cl = code.length;
+                var co = 0;
+                var cl = code.length;
                 while (co < cl) {
-                  int flag = code[co++] & 0xff;
+                  var flag = code[co++] & 0xff;
                   switch (flag) {
                     case 0x2a -> {
                       echo("      %4d: %s".formatted(co, "aload_0"));
@@ -291,17 +300,17 @@ public class Main {
                 }
 
                 // attributions
-                for (AttributeInfo ai : cais) {
-                  final String cn = Resolver.utf8(ai.attributeNameIndex, cp);
+                for (var ai : cais) {
+                  var cn = Resolver.utf8(ai.attributeNameIndex, cp);
                   if (cn.equals("LineNumberTable")) {
                     echo("      ".concat("LineNumberTable:"));
-                    int o = 0;
-                    final int lntl = Resolver.u2(ai.info, o);
+                    var o = 0;
+                    var lntl = Resolver.u2(ai.info, o);
                     o += 2;
                     for (int i = 0; i < lntl; i++) {
-                      final int sp = Resolver.u2(ai.info, o);
+                      var sp = Resolver.u2(ai.info, o);
                       o += 2;
-                      final int ln = Resolver.u2(ai.info, o);
+                      var ln = Resolver.u2(ai.info, o);
                       o += 2;
                       echo("        ".concat("line %d: %d".formatted(ln, sp)));
                     }
@@ -317,7 +326,7 @@ public class Main {
       // attributes
       {
         for (AttributeInfo attribute : cf.attributes) {
-          final String name = Resolver.utf8(attribute.attributeNameIndex, cp);
+          var name = Resolver.utf8(attribute.attributeNameIndex, cp);
           switch (name) {
             case "SourceFile" -> {
               final byte[] raw = attribute.info;
@@ -335,7 +344,50 @@ public class Main {
    */
   public static class Java {
 
+    // misc/Hello.class method args...
     public static void main(String[] args) throws IOException {
+      var file = new File(args[0]);
+      var fis = new FileInputStream(file);
+      var bytes = fis.readAllBytes();
+      var reader = new ClassReader(bytes);
+      var cf = reader.read();
+      var cp = cf.cp;
+
+      int[] pa = new int[args.length - 2];
+      for (int i = 2; i < args.length; i++) {
+        pa[i - 2] = Integer.parseInt(args[i]);
+      }
+
+      MethodInfo method = null;
+      for (MethodInfo mi: cf.methods) {
+        final String name = Resolver.utf8(mi.nameIndex, cp);
+        if (name.equals(args[1])) {
+          method = mi;
+        }
+      }
+
+      byte[] code = null;
+      int[] locals = null;
+      int[] stacks = null;
+      for (AttributeInfo attribute : method.attributes) {
+        final String name = Resolver.utf8(attribute.attributeNameIndex, cp);
+        if (name.equals("Code")) {
+          var raw = attribute.info;
+          var offset = 0;
+          var ms = Resolver.u2(raw, offset);
+          stacks = new int[ms];
+          offset += 2;
+          var ml = Resolver.u2(raw, offset);
+          locals = new int[ml];
+          offset += 2;
+
+          var clen = Resolver.u4(raw, offset);
+          offset += 4;
+          code = Resolver.raw(raw, offset, clen);
+        }
+      }
+      var f = new Frame(locals, stacks, code);
+      Interpreter.execute(f, pa);
     }
   }
 }

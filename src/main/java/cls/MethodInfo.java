@@ -1,9 +1,11 @@
+package cls;
+
 public class MethodInfo {
 
-  final int accessFlags;
-  final int nameIndex;
-  final int descriptorIndex;
-  final AttributeInfo[] attributes;
+  public final int accessFlags;
+  public final int nameIndex;
+  public final int descriptorIndex;
+  public final AttributeInfo[] attributes;
 
   public MethodInfo(
       int accessFlags,

@@ -1,10 +1,14 @@
+package cls;
+
+import static core.Const.*;
+
 public class ClassReader {
 
   private final byte[] raw;
   private final int len;
   private int cur = 0;
 
-  ClassReader(byte[] raw) {
+  public ClassReader(byte[] raw) {
     this.raw = raw;
     this.len = this.raw.length;
   }
@@ -27,7 +31,7 @@ public class ClassReader {
 
   byte[] raw(int size) {
     check(size);
-    final byte[] bytes = new byte[size];
+    var bytes = new byte[size];
     for (int i = 0; i < size; i++) {
       bytes[i] = raw[cur++];
     }
@@ -40,24 +44,24 @@ public class ClassReader {
     }
   }
 
-  ClassFile read() {
-    final int magic = u4();
-    final int minor = u2();
-    final int major = u2();
+  public ClassFile read() {
+    var magic = u4();
+    var minor = u2();
+    var major = u2();
 
-    final int constantPoolCount = u2();
-    CpInfo[] cp = new CpInfo[constantPoolCount];
+    var constantPoolCount = u2();
+    var cp = new CpInfo[constantPoolCount];
 
     // cp
     for (int i = 1; i < constantPoolCount; i++) {
       int tag = u1();
       switch (tag) {
-        case Const.CONSTANT_NameAndType, Const.CONSTANT_Methodref, Const.CONSTANT_Fieldref, Const.CONSTANT_InterfaceMethodref -> cp[i] = new CpInfo(
+        case CONSTANT_NameAndType, CONSTANT_Methodref, CONSTANT_Fieldref, CONSTANT_InterfaceMethodref -> cp[i] = new CpInfo(
             tag,
             raw(4));
-        case Const.CONSTANT_Class -> cp[i] = new CpInfo(tag, raw(2));
-        case Const.CONSTANT_Utf8 -> {
-          final int len = u2();
+        case CONSTANT_Class -> cp[i] = new CpInfo(tag, raw(2));
+        case CONSTANT_Utf8 -> {
+          var len = u2();
           cp[i] = new CpInfo(tag, raw(len));
         }
         default -> {
@@ -66,48 +70,48 @@ public class ClassReader {
       }
     }
     // end cp
-    final int access = u2();
-    final int self = u2();
-    final int parent = u2();
+    var access = u2();
+    var self = u2();
+    var parent = u2();
 
     // interface
-    final int interfaceCount = u2();
-    final int[] interfaces = new int[interfaceCount];
+    var interfaceCount = u2();
+    var interfaces = new int[interfaceCount];
     for (int i = 0; i < interfaceCount; i++) {
       interfaces[i] = u2();
     }
 
     // field
-    final int fieldCount = u2();
-    final FieldInfo[] fields = new FieldInfo[fieldCount];
+    var fieldCount = u2();
+    var fields = new FieldInfo[fieldCount];
     for (int i = 0; i < fieldCount; i++) {
-      int faf = u2();
-      int fni = u2();
-      int fdi = u2();
-      int fac = u2();
-      final AttributeInfo[] fais = new AttributeInfo[fac];
+      var faf = u2();
+      var fni = u2();
+      var fdi = u2();
+      var fac = u2();
+      var fais = new AttributeInfo[fac];
       for (int fi = 0; fi < fac; fi++) {
         fais[fi] = new AttributeInfo(u2(), raw(u4()));
       }
       fields[i] = new FieldInfo(faf, fni, fdi, fais);
     }
     // method
-    final int methodCount = u2();
-    final MethodInfo[] methods = new MethodInfo[methodCount];
+    var methodCount = u2();
+    var methods = new MethodInfo[methodCount];
     for (int i = 0; i < methodCount; i++) {
-      int maf = u2();
-      int mni = u2();
-      int mdi = u2();
-      int mac = u2();
-      final AttributeInfo[] mais = new AttributeInfo[mac];
-      for (int mi = 0; mi < mac; mi++) {
+      var maf = u2();
+      var mni = u2();
+      var mdi = u2();
+      var mac = u2();
+      var mais = new AttributeInfo[mac];
+      for (var mi = 0; mi < mac; mi++) {
         mais[mi] = new AttributeInfo(u2(), raw(u4()));
       }
       methods[i] = new MethodInfo(maf, mni, mdi, mais);
     }
     // attributes
-    final int attributesCount = u2();
-    final AttributeInfo[] attributes = new AttributeInfo[attributesCount];
+    var attributesCount = u2();
+    var attributes = new AttributeInfo[attributesCount];
     for (int i = 0; i < attributesCount; i++) {
       attributes[i] = new AttributeInfo(u2(), raw(u4()));
     }

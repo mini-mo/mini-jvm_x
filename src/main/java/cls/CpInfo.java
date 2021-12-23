@@ -1,7 +1,9 @@
+package cls;
+
 public class CpInfo {
 
-  final int tag;
-  final byte[] info;
+  public final int tag;
+  public final byte[] info;
 
   public CpInfo(
       int tag,

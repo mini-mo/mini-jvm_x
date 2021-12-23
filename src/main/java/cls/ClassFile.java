@@ -1,18 +1,20 @@
+package cls;
+
 // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1
 public final class ClassFile {
 
-  final int magic;
-  final int minorVersion;
-  final int majorVersion;
-  final int constantPoolCount;
-  final CpInfo[] cp;
-  final int accessFlags;
-  final int thisClass;
-  final int superClass;
-  final int[] interfaces;
-  final FieldInfo[] fields;
-  final MethodInfo[] methods;
-  final AttributeInfo[] attributes;
+  public final int magic;
+  public final int minorVersion;
+  public final int majorVersion;
+  public final int constantPoolCount;
+  public final CpInfo[] cp;
+  public final int accessFlags;
+  public final int thisClass;
+  public final int superClass;
+  public final int[] interfaces;
+  public final FieldInfo[] fields;
+  public final MethodInfo[] methods;
+  public final AttributeInfo[] attributes;
 
   public ClassFile(
       int magic,
