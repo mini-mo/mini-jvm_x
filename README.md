@@ -19,5 +19,13 @@ mini-jvm 重写版，使用 jdk17。
 
 ```bash
 
-java -cp target/classes Main\$Javap misc/Hello.class
+java -cp target/classes Javap misc/Hello.class
 ```
+
+### Java
+
+```bash
+
+java -cp target/classes Java misc/Hello.class add 1 10
+```
+

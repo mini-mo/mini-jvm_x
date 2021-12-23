@@ -4,19 +4,14 @@ import static core.Const.*;
 
 public class Interpreter {
 
-  public static void execute(
-      Frame frame,
-      int... args
-  ) {
+  public static void execute() {
+    final ExecEnv ee = Threads.getExecEnv();
+    final Frame frame = ee.current();
+
     int[] locals = frame.locals;
     int[] stacks = frame.stacks;
     byte[] code = frame.code;
     int si = 0;
-
-    // args
-    for (int i = 0; i < args.length; i++) {
-      locals[i] = args[i];
-    }
 
     int pc = 0;
     while (pc < code.length) {

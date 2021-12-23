@@ -2,9 +2,11 @@ package core;
 
 public class Frame {
 
-  int[] locals;
-  int[] stacks;
-  byte[] code;
+  public int[] locals;
+  public int[] stacks;
+  public byte[] code;
+
+  public Frame(){}
 
   public Frame(
       int[] locals,
