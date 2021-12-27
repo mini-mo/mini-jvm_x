@@ -6,4 +6,8 @@ public class Factorial {
     }
     return n * factorial(n-1);
   }
+
+  public static void main(int n) {
+    RT.println(factorial(n));
+  }
 }

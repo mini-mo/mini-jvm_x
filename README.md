@@ -32,5 +32,9 @@ java -cp target/classes Java misc/Hello.class add 1 10
 factorial
 
 ```bash
+
 java -cp target/classes Java misc/Factorial.class factorial 10
+
+# or
+java -cp target/classes Java misc/Factorial.class main 10
 ```

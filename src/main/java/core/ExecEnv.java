@@ -1,5 +1,8 @@
 package core;
 
+import cls.Clazz;
+import cls.Method;
+
 /**
  * 执行环境, 绑定至线程
  */
@@ -17,9 +20,14 @@ public class ExecEnv {
     return stack[top - 1];
   }
 
-  public Frame createFrame() {
+  public Frame createFrame(Clazz cls, Method method) {
     ensure();
-    final Frame nf = new Frame(null, null, null, null);
+    final Frame nf = new Frame();
+    nf.clazz = cls;
+    nf.method = method;
+    nf.locals = new int[method.maxLocals];
+    nf.stacks = new int[method.maxStacks];
+    nf.code = method.code;
     stack[top++] = nf;
     return nf;
   }

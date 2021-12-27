@@ -1,6 +1,8 @@
 package core;
 
+import cls.Clazz;
 import cls.CpInfo;
+import cls.Method;
 
 public abstract class Resolver {
 
@@ -72,5 +74,14 @@ public abstract class Resolver {
       bytes[i] = raw[offset++];
     }
     return bytes;
+  }
+
+  public static Method resolveMethod(Clazz cls, String name, String descritor) {
+    for (Method m : cls.methods) {
+      if (m.name.equals(name) && m.descriptor.equals(descritor)) {
+        return m;
+      }
+    }
+    return null;
   }
 }

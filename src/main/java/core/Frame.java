@@ -1,29 +1,19 @@
 package core;
 
-import cls.CpInfo;
+import cls.Clazz;
+import cls.Method;
 
 public class Frame {
+
+  public Clazz clazz;
+  public Method method;
 
   public int[] locals;
   public int[] stacks;
   public int si;
-
   public byte[] code;
-  public CpInfo[] cp;
 
   public int returnPc;
 
   public Frame(){}
-
-  public Frame(
-      int[] locals,
-      int[] stacks,
-      byte[] code,
-      CpInfo[] cp
-  ) {
-    this.locals = locals;
-    this.stacks = stacks;
-    this.code = code;
-    this.cp = cp;
-  }
 }

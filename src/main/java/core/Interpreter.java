@@ -3,6 +3,7 @@ package core;
 import static core.Const.*;
 
 import cls.CpInfo;
+import cls.Method;
 
 public class Interpreter {
 
@@ -13,7 +14,7 @@ public class Interpreter {
     int[] locals = frame.locals;
     int[] stacks = frame.stacks;
     byte[] code = frame.code;
-    CpInfo[] cp = frame.cp;
+    CpInfo[] cp = frame.clazz.cp;
     int si = 0;
 
     int pc = 0;
@@ -107,6 +108,9 @@ public class Interpreter {
         }
         case OPC_RETURN -> {
           // TODO ...
+          if (ee.empty()) {
+            return;
+          }
         }
         case OPC_INVOKESTATIC -> {
           final int ci = Resolver.u2(code, pc);
@@ -122,19 +126,21 @@ public class Interpreter {
             continue;
           }
 
+          // find method
+          if (!cls.equals(frame.clazz.name)) {
+            throw new IllegalStateException();
+          }
+
           Frame old = frame;
-          final Frame nf = ee.createFrame();
-          nf.code = code;
-          nf.stacks = new int[frame.stacks.length];
-          nf.locals= new int[frame.locals.length];
-          nf.cp = frame.cp;
+          Method neo = Resolver.resolveMethod(frame.clazz, mn, mt);
+          final Frame nf = ee.createFrame(old.clazz, neo);
           nf.returnPc = pc;
 
           frame = nf;
           code = frame.code;
           stacks = frame.stacks;
           locals = frame.locals;
-          cp = frame.cp;
+          cp = frame.clazz.cp;
 
           // args
           locals[0] = old.stacks[--si];

@@ -1,4 +1,7 @@
+import cls.ClassLoader;
 import cls.ClassReader;
+import cls.Clazz;
+import cls.Method;
 import cls.MethodInfo;
 import core.Frame;
 import core.Interpreter;
@@ -23,6 +26,7 @@ public class Java {
     var cf = reader.read();
     var cp = cf.cp;
 
+
     init();
 
     int[] pa = new int[args.length - 2];
@@ -30,44 +34,19 @@ public class Java {
       pa[i - 2] = Integer.parseInt(args[i]);
     }
 
-    MethodInfo method = null;
-    for (MethodInfo mi : cf.methods) {
-      final String name = Resolver.utf8(mi.nameIndex, cp);
-      if (name.equals(args[1])) {
-        method = mi;
+    Clazz cls = ClassLoader.load(cf);
+
+    Method main = null;
+    for (Method m : cls.methods) {
+      if (m.name.equals(args[1])) {
+        main = m;
       }
     }
-
-    byte[] code = null;
-    int[] locals = null;
-    int[] stacks = null;
-    for (var attribute : method.attributes) {
-      final String name = Resolver.utf8(attribute.attributeNameIndex, cp);
-      if (name.equals("Code")) {
-        var raw = attribute.info;
-        var offset = 0;
-        var ms = Resolver.u2(raw, offset);
-        stacks = new int[ms];
-        offset += 2;
-        var ml = Resolver.u2(raw, offset);
-        locals = new int[ml];
-        offset += 2;
-
-        var clen = Resolver.u4(raw, offset);
-        offset += 4;
-        code = Resolver.raw(raw, offset, clen);
-      }
-    }
-
-    final Frame frame = Threads.getExecEnv().createFrame();
-    frame.locals = locals;
-    frame.stacks = stacks;
-    frame.code = code;
-    frame.cp = cf.cp;
+    final Frame frame = Threads.getExecEnv().createFrame(cls, main);
 
     // args
     for (int i = 0; i < pa.length; i++) {
-      locals[i] = pa[i];
+      frame.locals[i] = pa[i];
     }
 
     Interpreter.executeJava();
