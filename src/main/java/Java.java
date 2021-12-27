@@ -2,6 +2,7 @@ import cls.ClassReader;
 import cls.MethodInfo;
 import core.Frame;
 import core.Interpreter;
+import core.Natives;
 import core.Resolver;
 import core.Threads;
 import java.io.File;
@@ -62,16 +63,18 @@ public class Java {
     frame.locals = locals;
     frame.stacks = stacks;
     frame.code = code;
+    frame.cp = cf.cp;
 
     // args
     for (int i = 0; i < pa.length; i++) {
       locals[i] = pa[i];
     }
 
-    Interpreter.execute();
+    Interpreter.executeJava();
   }
 
   private static void init() {
+    Natives.init();
     Threads.init();
   }
 }

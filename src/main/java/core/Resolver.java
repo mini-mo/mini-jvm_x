@@ -15,6 +15,13 @@ public abstract class Resolver {
     return (raw[offset] << 8) + (raw[offset + 1] << 0);
   }
 
+  public static int s2(
+      byte[] raw,
+      int offset
+  ) {
+    return (raw[offset] << 8) | (raw[offset + 1] << 0);
+  }
+
   public static int u4(byte[] raw) {
     return u4(raw, 0);
   }

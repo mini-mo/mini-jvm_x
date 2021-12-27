@@ -19,7 +19,7 @@ public class ExecEnv {
 
   public Frame createFrame() {
     ensure();
-    final Frame nf = new Frame(null, null, null);
+    final Frame nf = new Frame(null, null, null, null);
     stack[top++] = nf;
     return nf;
   }
@@ -35,7 +35,7 @@ public class ExecEnv {
   }
 
   private void ensure() {
-    if (stack.length >= top) { // need grow
+    if (top >= stack.length) { // need grow
       stack = new Frame[stack.length * 2];
     }
   }
