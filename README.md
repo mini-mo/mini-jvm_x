@@ -36,3 +36,12 @@ factorial
 java -cp target/classes Java misc/Factorial.class 10
 
 ```
+
+loop for add to n
+
+```bash
+
+java -cp target/classes Java misc/Loop.class 100000
+
+```
+

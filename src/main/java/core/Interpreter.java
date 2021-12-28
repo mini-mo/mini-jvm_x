@@ -21,11 +21,30 @@ public class Interpreter {
 //      System.out.println("%d %d".formatted(pc - 1, op));
       // end
       switch (op) {
+        case OPC_NOP -> {}
+        case OPC_ACONST_NULL -> {
+          stacks[si++] = 0;
+        }
+        case OPC_ICONST_M1 -> {
+          stacks[si++] = -1;
+        }
         case OPC_ICONST_0 -> {
           stacks[si++] = 0;
         }
         case OPC_ICONST_1 -> {
           stacks[si++] = 1;
+        }
+        case OPC_ICONST_2 -> {
+          stacks[si++] = 2;
+        }
+        case OPC_ICONST_3 -> {
+          stacks[si++] = 3;
+        }
+        case OPC_ICONST_4 -> {
+          stacks[si++] = 4;
+        }
+        case OPC_ICONST_5 -> {
+          stacks[si++] = 5;
         }
         case OPC_ILOAD -> {
           int idx = code[pc++] & 0xff;
@@ -81,6 +100,29 @@ public class Interpreter {
           var tmp = v1 * v2;
           stacks[si++] = tmp;
         }
+        case OPC_IREM -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var tmp = v1 % v2;
+          stacks[si++] = tmp;
+        }
+        case OPC_IINC -> {
+          var idx = Resolver.u1(code, pc);
+          pc++;
+          var step = Resolver.s1(code, pc);
+          pc++;
+          locals[idx] += step;
+        }
+        case OPC_IF_ICMPGE -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var next = Resolver.s2(code, pc);
+          if (v1 >= v2) {
+            pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
+        }
         case OPC_IF_ICMPGT -> {
           var v2 = stacks[--si];
           var v1 = stacks[--si];
@@ -122,6 +164,10 @@ public class Interpreter {
           stacks = frame.stacks;
           locals = frame.locals;
           si = frame.si;
+        }
+        case OPC_GOTO -> {
+          final int offset = Resolver.s2(code, pc);
+          pc = pc + offset - 1;
         }
         case OPC_INVOKESTATIC -> {
           var ci = Resolver.u2(code, pc);
@@ -169,7 +215,7 @@ public class Interpreter {
 //          throw new IllegalStateException();
         }
         default -> {
-          System.out.println(op);
+          throw new IllegalStateException("opc not impl: %x %d" + op);
         }
       }
     }

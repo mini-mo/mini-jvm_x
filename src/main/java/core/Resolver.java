@@ -14,14 +14,14 @@ public abstract class Resolver {
       byte[] raw,
       int offset
   ) {
-    return (raw[offset] << 8) + (raw[offset + 1] << 0);
+    return (raw[offset] << 8) + (raw[offset + 1]);
   }
 
   public static int s2(
       byte[] raw,
       int offset
   ) {
-    return (raw[offset] << 8) | (raw[offset + 1] << 0);
+    return (raw[offset] << 8) | (raw[offset + 1]);
   }
 
   public static int u4(byte[] raw) {
@@ -32,8 +32,8 @@ public abstract class Resolver {
       byte[] raw,
       int offset
   ) {
-    return (((raw[offset++] & 0xff) << 24) + ((raw[offset++] & 0xff) << 16) + ((raw[offset++] & 0xff) << 8) + (
-        (raw[offset++] & 0xff) << 0));
+    return (((raw[offset++] & 0xff) << 24) + ((raw[offset++] & 0xff) << 16) + ((raw[offset++] & 0xff) << 8) + ((
+        raw[offset++] & 0xff)));
   }
 
   public static String className(
@@ -76,12 +76,30 @@ public abstract class Resolver {
     return bytes;
   }
 
-  public static Method resolveMethod(Clazz cls, String name, String descritor) {
+  public static Method resolveMethod(
+      Clazz cls,
+      String name,
+      String descritor
+  ) {
     for (Method m : cls.methods) {
       if (m.name.equals(name) && m.descriptor.equals(descritor)) {
         return m;
       }
     }
     return null;
+  }
+
+  public static int u1(
+      byte[] code,
+      int pc
+  ) {
+    return code[pc] & 0xff;
+  }
+
+  public static int s1(
+      byte[] code,
+      int pc
+  ) {
+    return code[pc];
   }
 }

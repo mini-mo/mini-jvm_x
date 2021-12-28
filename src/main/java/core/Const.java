@@ -21,7 +21,7 @@ public interface Const {
   int CONSTANT_Module = 19;
   int CONSTANT_Package = 20;
 
-  // opcode
+  // opcode https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-6.html
   int OPC_NOP = 0;
   int OPC_ACONST_NULL = 1;
   int OPC_ICONST_M1 = 2;
