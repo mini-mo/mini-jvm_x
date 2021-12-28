@@ -21,4 +21,10 @@ public class Hello2 {
     RT.println(r);
   }
 
+  public static void main(int x , int y) {
+    add(x, y);
+    sub(x, y);
+    add_add_sub(x, y);
+  }
+
 }

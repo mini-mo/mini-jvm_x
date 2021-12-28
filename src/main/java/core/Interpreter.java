@@ -2,24 +2,21 @@ package core;
 
 import static core.Const.*;
 
-import cls.CpInfo;
-import cls.Method;
-
 public class Interpreter {
 
   public static void executeJava() {
-    final ExecEnv ee = Threads.getExecEnv();
-    Frame frame = ee.current();
+    var ee = Threads.getExecEnv();
+    var frame = ee.current();
 
-    int[] locals = frame.locals;
-    int[] stacks = frame.stacks;
-    byte[] code = frame.code;
-    CpInfo[] cp = frame.clazz.cp;
-    int si = 0;
+    var locals = frame.locals;
+    var stacks = frame.stacks;
+    var code = frame.code;
+    var cp = frame.clazz.cp;
+    var si = 0;
 
-    int pc = 0;
+    var pc = 0;
     while (pc < code.length) {
-      final int op = code[pc++] & 0xff;
+      var op = code[pc++] & 0xff;
       // log
 //      System.out.println("%d %d".formatted(pc - 1, op));
       // end
@@ -66,22 +63,28 @@ public class Interpreter {
           var tmp = stacks[--si] + stacks[--si];
           stacks[si++] = tmp;
         }
+        case OPC_IDIV -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var tmp = v1 / v2;
+          stacks[si++] = tmp;
+        }
         case OPC_ISUB -> {
-          final int v2 = stacks[--si];
-          final int v1 = stacks[--si];
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
           var tmp = v1 - v2;
           stacks[si++] = tmp;
         }
         case OPC_IMUL -> {
-          final int v2 = stacks[--si];
-          final int v1 = stacks[--si];
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
           var tmp = v1 * v2;
           stacks[si++] = tmp;
         }
         case OPC_IF_ICMPGT -> {
-          final int v2 = stacks[--si];
-          final int v1 = stacks[--si];
-          final int next = Resolver.s2(code, pc);
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var next = Resolver.s2(code, pc);
           if (v1 > v2) {
             pc = pc + next - 1;
             continue;
@@ -90,7 +93,7 @@ public class Interpreter {
         }
         case OPC_IRETURN -> {
           var tmp = stacks[--si];
-          final Frame old = ee.popFrame();
+          var old = ee.popFrame();
           pc = old.returnPc;
 
           if (ee.empty()) {
@@ -107,20 +110,28 @@ public class Interpreter {
           stacks[si++] = tmp;
         }
         case OPC_RETURN -> {
-          // TODO ...
+          var old = ee.popFrame();
+          pc = old.returnPc;
+
           if (ee.empty()) {
             return;
           }
+
+          frame = ee.current();
+          code = frame.code;
+          stacks = frame.stacks;
+          locals = frame.locals;
+          si = frame.si;
         }
         case OPC_INVOKESTATIC -> {
-          final int ci = Resolver.u2(code, pc);
+          var ci = Resolver.u2(code, pc);
           pc += 2;
-          final String cls = Resolver.className(Resolver.u2(cp[ci].info), cp);
-          final String mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
-          final String mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
+          var cls = Resolver.className(Resolver.u2(cp[ci].info), cp);
+          var mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
+          var mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
 
-          final String key = cls.concat("_").concat(mn).concat("_").concat(mt);
-          final NativeMethod nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          var key = cls.concat("_").concat(mn).concat("_").concat(mt);
+          var nm = MetaSpace.resolveNativeMethod(key.getBytes());
           if (nm != null) { // native
             si = nm.invoke(stacks, si - 1);
             continue;
@@ -128,12 +139,13 @@ public class Interpreter {
 
           // find method
           if (!cls.equals(frame.clazz.name)) {
+            // TODO ...
             throw new IllegalStateException();
           }
 
-          Frame old = frame;
-          Method neo = Resolver.resolveMethod(frame.clazz, mn, mt);
-          final Frame nf = ee.createFrame(old.clazz, neo);
+          var old = frame;
+          var neo = Resolver.resolveMethod(frame.clazz, mn, mt);
+          var nf = ee.createFrame(old.clazz, neo);
           nf.returnPc = pc;
 
           frame = nf;
@@ -143,7 +155,11 @@ public class Interpreter {
           cp = frame.clazz.cp;
 
           // args
-          locals[0] = old.stacks[--si];
+          var len = neo.argsLength();
+          si -= len;
+          if (len > 0) {
+            System.arraycopy(old.stacks, si, locals, 0, len);
+          }
           old.si = si;
 
           si = 0;
