@@ -21,8 +21,7 @@ public class Javap {
     var file = new File(args[0]);
     var fis = new FileInputStream(file);
     var bytes = fis.readAllBytes();
-    var reader = new ClassReader(bytes);
-    var cf = reader.read();
+    var cf = ClassReader.read(bytes);
     var cp = cf.cp;
 
     // basic

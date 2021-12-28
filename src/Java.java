@@ -15,12 +15,8 @@ public class Java {
 
   // misc/Hello.class method args...
   public static void main(String[] args) throws IOException {
-    var file = new File(args[0]);
-    var fis = new FileInputStream(file);
-    var bytes = fis.readAllBytes();
-    var reader = new ClassReader(bytes);
-    var cf = reader.read();
 
+    String name = args[0];
 
     init();
 
@@ -29,7 +25,7 @@ public class Java {
       pa[i - 1] = Integer.parseInt(args[i]);
     }
 
-    var cls = ClassLoader.load(cf);
+    var cls = ClassLoader.defineClass(name);
 
     var main = Resolver.resolveMethod(cls, "main", "()V"); // 无参
     if (pa.length == 1) {
@@ -65,6 +61,7 @@ public class Java {
   }
 
   private static void init() {
+    ClassLoader.init("misc:sdk");
     Natives.init();
     Threads.init();
   }
