@@ -2,6 +2,10 @@ package core;
 
 import static core.Const.*;
 
+import cls.ClassLoader;
+import cls.Clazz;
+import cls.Field;
+
 public class Interpreter {
 
   public static void executeJava() {
@@ -165,9 +169,74 @@ public class Interpreter {
           locals = frame.locals;
           si = frame.si;
         }
+        case OPC_ASTORE_0 -> {
+          locals[0] = stacks[--si];
+        }
+        case OPC_ALOAD_0 -> {
+          stacks[si++] = locals[0];
+        }
+        case OPC_POP -> {
+          si--;
+        }
+        case OPC_DUP -> {
+          stacks[si++] = stacks[si-1];
+        }
+        case OPC_NEW -> {
+          var ci = Resolver.u2(code, pc);
+          pc += 2;
+          var cls = Resolver.className(ci, cp);
+          var clz = ClassLoader.findSystemClass(cls);
+          var point = Heap.malloc(clz.size);
+          stacks[si++] = point;
+        }
         case OPC_GOTO -> {
-          final int offset = Resolver.s2(code, pc);
+          var offset = Resolver.s2(code, pc);
           pc = pc + offset - 1;
+        }
+        case OPC_PUTFIELD -> {
+          var fi = Resolver.u2(code, pc);
+          pc += 2;
+
+          var ci = Resolver.u2(cp[fi].info);
+          var ndi = Resolver.u2(cp[fi].info, 2);
+          var cn = Resolver.className(ci, cp);
+          var cls = ClassLoader.findSystemClass(cn);
+
+          var fn = Resolver.utf8(Resolver.u2(cp[ndi].info), cp);
+          var fd = Resolver.utf8(Resolver.u2(cp[ndi].info,2), cp);
+
+          var field = Resolver.resolveField(cls, fn, fd);
+
+          // TODO int
+          var v = stacks[--si];
+          var p = stacks[--si];
+
+          Heap.setInt(p, field.offset, v);
+        }
+
+        case OPC_GETFIELD -> {
+          var fi = Resolver.u2(code, pc);
+          pc += 2;
+
+          var ci = Resolver.u2(cp[fi].info);
+          var ndi = Resolver.u2(cp[fi].info, 2);
+          var cn = Resolver.className(ci, cp);
+          var cls = ClassLoader.findSystemClass(cn);
+
+          var fn = Resolver.utf8(Resolver.u2(cp[ndi].info), cp);
+          var fd = Resolver.utf8(Resolver.u2(cp[ndi].info,2), cp);
+
+          var field = Resolver.resolveField(cls, fn, fd);
+
+          // TODO int
+          var p = stacks[--si];
+          var v = Heap.getInt(p, field.offset);
+          stacks[si++] = v;
+        }
+
+        case OPC_INVOKESPECIAL -> {
+          si--;
+          pc += 2;
         }
         case OPC_INVOKESTATIC -> {
           var ci = Resolver.u2(code, pc);
@@ -179,7 +248,7 @@ public class Interpreter {
           var key = cls.concat("_").concat(mn).concat("_").concat(mt);
           var nm = MetaSpace.resolveNativeMethod(key.getBytes());
           if (nm != null) { // native
-            si = nm.invoke(stacks, si - 1);
+            si = nm.invoke(stacks, si);
             continue;
           }
 
@@ -215,7 +284,7 @@ public class Interpreter {
 //          throw new IllegalStateException();
         }
         default -> {
-          throw new IllegalStateException("opc not impl: %x %d" + op);
+          throw new IllegalStateException("opc not impl: 0x%x %d".formatted(op, op));
         }
       }
     }

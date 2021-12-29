@@ -1,4 +1,4 @@
-public class Loop {
+public class Loop2 {
 
   public static int loop(int n) {
 
@@ -10,10 +10,13 @@ public class Loop {
   }
 
   public static void main(int n) {
-    RT.println(loop(n));
-  }
+    loop(n);
+    loop(n);
 
-  public static void main(String ...args) {
-    RT.println(loop(Integer.parseInt(args[0])));
+    RT.begin();
+
+    RT.println(loop(n));
+
+    RT.end();
   }
 }

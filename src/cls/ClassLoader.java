@@ -17,12 +17,18 @@ public abstract class ClassLoader {
     return true;
   }
 
-  public static Clazz defineClass(String name) {
+  public static Clazz findSystemClass(String name) {
     Clazz cache = bootClasses.get(name.getBytes());
     if (cache != null) {
       return cache;
     }
 
+    Clazz cls = loadSystemClass(name);
+    bootClasses.put(name.getBytes(), cls);
+    return cls;
+  }
+
+  private static Clazz loadSystemClass(String name) {
     var cn = name.replace('.', '/');
     cn = cn.concat(".class");
 
@@ -48,13 +54,14 @@ public abstract class ClassLoader {
       throw new IllegalStateException("class not found, ".concat(name));
     }
 
-    Clazz cls = load(cf);
-    bootClasses.put(name.getBytes(), cls);
+    Clazz cls = defineClass(cf);
     return cls;
   }
 
-  // tmp
-  public static Clazz load(ClassFile cf) {
+  // initClass
+  // linkClass
+
+  public static Clazz defineClass(ClassFile cf) {
     Method[] methods = new Method[cf.methods.length];
     CpInfo[] cp = cf.cp;
     for (int i = 0; i < cf.methods.length; i++) {
@@ -85,6 +92,30 @@ public abstract class ClassLoader {
       }
       methods[i] = m;
     }
-    return new Clazz(Resolver.className(cf.thisClass, cp), methods, cp);
+
+    // fields
+    int size = 0;
+    Field[] fields = new Field[cf.fields.length];
+    for (int i = 0; i < cf.fields.length; i++) {
+      FieldInfo fi = cf.fields[i];
+      Field f = new Field();
+      f.accessFlags = fi.accessFlags;
+      f.name = Resolver.utf8(fi.nameIndex, cp);
+      f.descriptor = Resolver.utf8(fi.descriptorIndex, cp);
+
+      switch (f.descriptor) {
+        case "I" -> {
+          f.offset = size;
+          size += 4;
+        }
+        default -> {
+          throw new IllegalStateException();
+        }
+      }
+
+      fields[i] = f;
+    }
+
+    return new Clazz(Resolver.className(cf.thisClass, cp), fields, methods, cp, size);
   }
 }

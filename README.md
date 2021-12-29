@@ -26,14 +26,14 @@ java -cp target/classes Javap misc/Hello.class
 
 ```bash
 
-java -cp target/classes Java Hello 1 10
+java -cp classes Java Hello 1 10
 ```
 
 factorial
 
 ```bash
 
-java -cp target/classes Java Factorial 10
+java -cp classes Java Factorial 10
 
 ```
 
@@ -41,7 +41,13 @@ loop for add to n
 
 ```bash
 
-java -cp target/classes Java Loop 100000
+java -cp classes Java Loop 100000
 
 ```
 
+basic obj
+
+```bash
+
+java -cp classes Java Obj
+```

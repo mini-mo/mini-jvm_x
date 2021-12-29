@@ -2,12 +2,12 @@ package core;
 
 public class Threads {
 
-  static NThread main;
+  static VMThread main;
 
-  static ThreadLocal<NThread> self = new ThreadLocal<>();
+  static ThreadLocal<VMThread> self = new ThreadLocal<>();
 
   public static void init() {
-    main = new NThread(Thread.currentThread(), new ExecEnv());
+    main = new VMThread(Thread.currentThread(), new ExecEnv());
     self.set(main);
   }
 

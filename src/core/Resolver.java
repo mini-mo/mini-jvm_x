@@ -2,6 +2,7 @@ package core;
 
 import cls.Clazz;
 import cls.CpInfo;
+import cls.Field;
 import cls.Method;
 
 public abstract class Resolver {
@@ -57,6 +58,20 @@ public abstract class Resolver {
     return utf8(u2(cp[idx].info, 2), cp);
   }
 
+  public static String fieldName(
+      int idx,
+      CpInfo[] cp
+  ) {
+    return utf8(u2(cp[idx].info), cp);
+  }
+
+  public static String fieldDescriptor(
+      int idx,
+      CpInfo[] cp
+  ) {
+    return utf8(u2(cp[idx].info, 2), cp);
+  }
+
   public static String utf8(
       int idx,
       CpInfo[] cp
@@ -101,5 +116,18 @@ public abstract class Resolver {
       int pc
   ) {
     return code[pc];
+  }
+
+  public static Field resolveField(
+      Clazz cls,
+      String name,
+      String type
+  ) {
+    for (Field field : cls.fields) {
+      if (field.name.equals(name) && field.descriptor.equals(type)) {
+        return field;
+      }
+    }
+    return null;
   }
 }
