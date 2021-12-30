@@ -224,4 +224,24 @@ public interface Const {
   int OPC_IFNONNULL = 199;
   int OPC_GOTO_W = 200;
   int OPC_JSR_W = 201;
+
+  // class state
+  int CLASS_LOADED = 1;
+  int CLASS_LINKED = 2;
+  int CLASS_BAD = 3;
+  int CLASS_INITING = 4;
+  int CLASS_INITED = 5;
+  int CLASS_ARRAY = 6;
+  int CLASS_PRIM = 7;
+
+  // class flag
+  int CLASS_CLASS = 1;
+  int REFERENCE = 2;
+  int SOFT_REFERENCE = 4;
+  int WEAK_REFERENCE = 8;
+  int PHANTOM_REFERENCE = 16;
+  int FINALIZED = 32;
+  int CLASS_LOADER = 64;
+  int CLASS_CLASH = 128;
+  int ANONYMOUS = 256;
 }

@@ -13,6 +13,25 @@ mini-jvm 重写版，使用 jdk17。
 - jdk17 (zulu)
 - macos arm
 
+## 开发计划
+
+- [ ] 执行引擎
+  - [ ] 指令集
+    - [ ] Load and Store
+    - [ ] Arithmetic
+    - [ ] Type Conversion
+    - [ ] Object Creation andManipulation
+    - [ ] Operand Stack Management
+    - [ ] Control Transfer
+    - [ ] Method Invocation and Return
+    - [ ] Others
+      - [ ] athrow
+      - [ ] moniterenter
+      - [ ] moniterexit
+- [ ] 自动内存管理
+- [ ] 线程
+- [ ] 本地方法
+
 ## 实现
 
 ### Javap

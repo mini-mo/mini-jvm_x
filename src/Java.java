@@ -1,6 +1,6 @@
 import cls.ClassLoader;
+import core.Executor;
 import core.Heap;
-import core.Interpreter;
 import core.Natives;
 import core.Resolver;
 import core.Threads;
@@ -48,14 +48,7 @@ public class Java {
       throw new IllegalStateException("not found main method");
     }
 
-    var frame = Threads.getExecEnv().createFrame(cls, main);
-
-    // args
-    for (int i = 0; i < pa.length; i++) {
-      frame.locals[i] = pa[i];
-    }
-
-    Interpreter.executeJava();
+    Executor.executeStaticMethod(cls.offset, main, pa);
   }
 
   private static void init() {

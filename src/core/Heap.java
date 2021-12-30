@@ -4,6 +4,8 @@ public abstract class Heap {
 
   private static byte[] mem;
   private static int heapMax;
+  private static int heapBase;
+  // 确保有效指针的值均大于 0
   private static int cur;
 
   /**
@@ -105,7 +107,8 @@ public abstract class Heap {
   public static boolean init(int size) {
     mem = new byte[size];
     heapMax = size;
-    cur = 0;
+    heapBase = 8;
+    cur = heapBase;
     return true;
   }
 }

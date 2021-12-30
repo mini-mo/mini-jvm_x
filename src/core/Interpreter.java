@@ -3,8 +3,6 @@ package core;
 import static core.Const.*;
 
 import cls.ClassLoader;
-import cls.Clazz;
-import cls.Field;
 
 public class Interpreter {
 

@@ -123,7 +123,8 @@ public abstract class Resolver {
       String name,
       String type
   ) {
-    for (Field field : cls.fields) {
+    for (int i = cls.fields.length - 1; i >= 0; i--) {
+      var field = cls.fields[i];
       if (field.name.equals(name) && field.descriptor.equals(type)) {
         return field;
       }

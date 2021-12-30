@@ -6,10 +6,10 @@ public class HeapTest {
     Heap.init(100 * 1024); // 100 KB
 
     var p = Heap.malloc(220);
-    System.out.println(p == 8);
+    System.out.println(p == 16);
 
     p = Heap.malloc(224);
-    System.out.println(p == 240);
+    System.out.println(p == 248);
 
     // ---
     Heap.setInt(p, 0, 10);
