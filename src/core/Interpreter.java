@@ -182,9 +182,10 @@ public class Interpreter {
         case OPC_NEW -> {
           var ci = Resolver.u2(code, pc);
           pc += 2;
-          var cls = Resolver.className(ci, cp);
-          var clz = ClassLoader.findSystemClass(cls);
-          var point = Heap.malloc(clz.size);
+          var cn = Resolver.className(ci, cp);
+          var cls = ClassLoader.findSystemClass(cn);
+          var point = Heap.malloc(cls.size);
+          Heap.setInt(point, -8, cls.offset); // make relation from instance to class
           stacks[si++] = point;
         }
         case OPC_GOTO -> {
@@ -198,16 +199,18 @@ public class Interpreter {
           var ci = Resolver.u2(cp[fi].info);
           var ndi = Resolver.u2(cp[fi].info, 2);
           var cn = Resolver.className(ci, cp);
-          var cls = ClassLoader.findSystemClass(cn);
+//          var cls = ClassLoader.findSystemClass(cn);
 
           var fn = Resolver.utf8(Resolver.u2(cp[ndi].info), cp);
           var fd = Resolver.utf8(Resolver.u2(cp[ndi].info,2), cp);
 
-          var field = Resolver.resolveField(cls, fn, fd);
 
           // TODO int
           var v = stacks[--si];
           var p = stacks[--si];
+
+          var cls = MetaSpace.resolveClass(Heap.getInt(p, -8));
+          var field = Resolver.resolveField(cls, fn, fd);
 
           Heap.setInt(p, field.offset, v);
         }
@@ -219,15 +222,17 @@ public class Interpreter {
           var ci = Resolver.u2(cp[fi].info);
           var ndi = Resolver.u2(cp[fi].info, 2);
           var cn = Resolver.className(ci, cp);
-          var cls = ClassLoader.findSystemClass(cn);
+//          var cls = ClassLoader.findSystemClass(cn);
 
           var fn = Resolver.utf8(Resolver.u2(cp[ndi].info), cp);
           var fd = Resolver.utf8(Resolver.u2(cp[ndi].info,2), cp);
 
-          var field = Resolver.resolveField(cls, fn, fd);
-
           // TODO int
           var p = stacks[--si];
+
+          var cls = MetaSpace.resolveClass(Heap.getInt(p, -8));
+          var field = Resolver.resolveField(cls, fn, fd);
+
           var v = Heap.getInt(p, field.offset);
           stacks[si++] = v;
         }
