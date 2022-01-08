@@ -52,7 +52,7 @@ public class Java {
   }
 
   private static void init() {
-    ClassLoader.init("misc:sdk");
+    ClassLoader.init("../misc:../sdk");
     Natives.init();
     Threads.init();
     Heap.init(10 * 1024 * 1024); // 10 MB
