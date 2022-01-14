@@ -69,26 +69,55 @@ int main(int argc, char **argv) {
 
   int cp_count;
   READ_U2(cp_count, ptr, read_len);
-  printf("cp cnt: %d\n", cp_count);
+  // printf("cp cnt: %d\n", cp_count);
 
   // read constant pool
-  ConstantItem *cp = malloc(sizeof(ConstantItem) * cp_count);
-  for (int i = 1; i < cp_count; i ++ ) {
+  ConstantItem *cp = malloc(sizeof(ConstantItem) * (cp_count -1 ));
+  ConstantItem *tmp = cp;
+  for (int i = 1; i < cp_count; i++,tmp++ ) {
     u1 tag;
     READ_U1(tag, ptr, read_len);
-    printf("tag: %d\n", tag);
+    // printf("tag: %d\n", tag);
+    tmp -> tag = tag;
 
-    if (tag == 10) { // method ref
+    if (tag == 10 || tag == 12 ) { // method ref
       u1 *raw = malloc(4);
       READ_RAW(raw, ptr, 4);
       u2 x;
       u2 y;
       READ_U2(x, raw, 4);
       READ_U2(y, raw, 4);
-
-      printf("i: %d %d\n",x ,y);
-      continue;
+      
+      tmp -> raw = raw;
+      // printf("i: %d %d\n",x ,y);
+    } else if (tag == 7) {
+      u1 *raw = malloc(2);
+      READ_RAW(raw, ptr, 2);
+      tmp -> raw = raw;
+    } else if (tag == 1) {
+      u2 len;
+      READ_U2(len, ptr, read_len);
+      // printf("len : %d\n", len);
+      u1 *raw = malloc(len);
+      READ_RAW(raw, ptr, len);
+      tmp -> raw = raw;
+    } else {
+      printf("unknown tag %d\n", tag);
     }
-    exit(-3);
   }
+  u2 access_flags;
+  u2 this_class;
+  u2 super_class;
+  READ_U2(access_flags, ptr,2);
+  READ_U2(this_class, ptr,2);
+  READ_U2(super_class, ptr,2);
+
+  u2 interfaces_count;
+  u2 fields_count;
+  u2 methods_count;
+  READ_U2(interfaces_count, ptr,2);
+  READ_U2(fields_count, ptr,2);
+  READ_U2(methods_count, ptr,2);
+
+  printf("methods_counnt: %d\n", methods_count);
 }
