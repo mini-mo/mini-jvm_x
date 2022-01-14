@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef unsigned char u1;
 typedef unsigned short u2;
@@ -17,6 +18,13 @@ typedef unsigned long long u8;
 
 #define READ_INDEX(v, p, l)               READ_U2(v,p,l)
 #define READ_TYPE_INDEX(v, cp, t, p, l)     READ_U2(v,p,l)
+
+#define READ_RAW(v, p, l)  memcpy((void *)v, (void *)p, l); (p)+=l;
+
+typedef struct constant_item {
+  u1 tag;
+  u1 *raw;
+} ConstantItem;
 
 int main(int argc, char **argv) {
 
@@ -63,4 +71,24 @@ int main(int argc, char **argv) {
   READ_U2(cp_count, ptr, read_len);
   printf("cp cnt: %d\n", cp_count);
 
+  // read constant pool
+  ConstantItem *cp = malloc(sizeof(ConstantItem) * cp_count);
+  for (int i = 1; i < cp_count; i ++ ) {
+    u1 tag;
+    READ_U1(tag, ptr, read_len);
+    printf("tag: %d\n", tag);
+
+    if (tag == 10) { // method ref
+      u1 *raw = malloc(4);
+      READ_RAW(raw, ptr, 4);
+      u2 x;
+      u2 y;
+      READ_U2(x, raw, 4);
+      READ_U2(y, raw, 4);
+
+      printf("i: %d %d\n",x ,y);
+      continue;
+    }
+    exit(-3);
+  }
 }
