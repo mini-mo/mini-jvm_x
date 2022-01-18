@@ -23,5 +23,10 @@ public abstract class Natives {
       return top;
     }));
 
+    MetaSpace.registerNativeMethod("java/io/NOutStream_println_(I)V".getBytes(), ((ostack, top) -> {
+      System.out.println(ostack[top - 1]);
+      return top - 1;
+    }));
+
   }
 }

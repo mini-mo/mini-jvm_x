@@ -3,6 +3,9 @@ package core;
 import static core.Const.*;
 
 import cls.ClassLoader;
+import cls.Clazz;
+import cls.Field;
+import cls.Method;
 
 public class Interpreter {
 
@@ -140,13 +143,17 @@ public class Interpreter {
           var old = ee.popFrame();
           pc = old.returnPc;
 
-          if (ee.empty()) {
-            System.out.println(tmp);
+          if (ee.empty() || ee.current().dummy) {
+            if (ee.current().dummy) {
+              ee.popFrame();
+            }
+//            System.out.println(tmp);
             return;
           }
 
           frame = ee.current();
           code = frame.code;
+          cp = frame.clazz.cp;
           stacks = frame.stacks;
           locals = frame.locals;
           si = frame.si;
@@ -157,12 +164,16 @@ public class Interpreter {
           var old = ee.popFrame();
           pc = old.returnPc;
 
-          if (ee.empty()) {
+          if (ee.empty() || ee.current().dummy) {
+            if (ee.current().dummy) {
+              ee.popFrame();
+            }
             return;
           }
 
           frame = ee.current();
           code = frame.code;
+          cp = frame.clazz.cp;
           stacks = frame.stacks;
           locals = frame.locals;
           si = frame.si;
@@ -191,6 +202,31 @@ public class Interpreter {
         case OPC_GOTO -> {
           var offset = Resolver.s2(code, pc);
           pc = pc + offset - 1;
+        }
+
+        case OPC_PUTSTATIC-> {
+          int fi = Resolver.u2(code, pc);
+          pc += 2;
+          var ci = Resolver.u2(cp[fi].info);
+          var ndi = Resolver.u2(cp[fi].info, 2);
+          var cn = Resolver.className(ci, cp);
+
+          Clazz cls = Resolver.resolveClass(cn);
+
+          Field f = Resolver.resolveField(cls, Resolver.fieldName(ndi, cp), Resolver.fieldDescriptor(ndi, cp));
+          Heap.setInt(cls.offset, f.offset, stacks[--si]);
+        }
+        case OPC_GETSTATIC -> {
+          int fi = Resolver.u2(code, pc);
+          pc += 2;
+          var ci = Resolver.u2(cp[fi].info);
+          var ndi = Resolver.u2(cp[fi].info, 2);
+          var cn = Resolver.className(ci, cp);
+
+          Clazz cls = Resolver.resolveClass(cn);
+          Field f = Resolver.resolveField(cls, Resolver.fieldName(ndi, cp), Resolver.fieldDescriptor(ndi, cp));
+
+          stacks[si++] = Heap.getInt(cls.offset, f.offset);
         }
         case OPC_PUTFIELD -> {
           var fi = Resolver.u2(code, pc);
@@ -236,7 +272,61 @@ public class Interpreter {
           var v = Heap.getInt(p, field.offset);
           stacks[si++] = v;
         }
+        case OPC_INVOKEVIRTUAL -> {
+          // TODO ...
+          var ci = Resolver.u2(code, pc);
+          pc += 2;
 
+          var cn= Resolver.className(Resolver.u2(cp[ci].info), cp);
+          var mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
+          var mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
+
+          var key = cn.concat("_").concat(mn).concat("_").concat(mt);
+          var nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          if (nm != null) { // native
+            si = nm.invoke(stacks, si);
+            continue;
+          }
+
+          var ocs = ClassLoader.findSystemClass(cn);
+          var om = Resolver.resolveMethod(ocs, mn, mt);
+          int len = om.argsLength();
+
+          int self = stacks[si - len];
+          var cls = MetaSpace.resolveClass(Heap.getInt(self, -8));
+
+          key = cls.name.concat("_").concat(mn).concat("_").concat(mt);
+          nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          if (nm != null) { // native
+            si = nm.invoke(stacks, si);
+            continue;
+          }
+
+          var neo = Resolver.resolveMethod(cls, mn, mt);
+          var old = frame;
+//          var neo = Resolver.resolveMethod(frame.clazz, mn, mt);
+          var nf = ee.createFrame(old.clazz, neo);
+          nf.returnPc = pc;
+
+          frame = nf;
+          code = frame.code;
+          stacks = frame.stacks;
+          locals = frame.locals;
+          cp = frame.clazz.cp;
+
+          // args
+          si -= len;
+          if (len > 0) {
+            System.arraycopy(old.stacks, si, locals, 0, len);
+          }
+          old.si = si;
+
+          si = 0;
+          pc = 0;
+
+          continue;
+//          throw new IllegalStateException();
+        }
         case OPC_INVOKESPECIAL -> {
           si--;
           pc += 2;

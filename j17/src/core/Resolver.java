@@ -1,5 +1,6 @@
 package core;
 
+import cls.ClassLoader;
 import cls.Clazz;
 import cls.CpInfo;
 import cls.Field;
@@ -130,5 +131,21 @@ public abstract class Resolver {
       }
     }
     return null;
+  }
+
+  public static Clazz resolveClass(String className) {
+    Clazz cls = ClassLoader.findSystemClass(className);
+    if (cls == null) {
+      throw new IllegalStateException();
+    }
+
+    Method m = resolveMethod(cls, "<clinit>", "()V");
+    if (cls.state >= Const.CLASS_INITING) {
+      return cls;
+    }
+    cls.state = Const.CLASS_INITING;
+    Executor.executeStaticMethod(cls.offset, m);
+    cls.state = Const.CLASS_INITED;
+    return cls;
   }
 }

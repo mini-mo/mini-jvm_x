@@ -10,7 +10,7 @@ public class Executor {
   public static int executeStaticMethod(
       int cls,
       Method method,
-      int[] args
+      int... args
   ) {
     return executeMethod(0, cls, method, args);
   }
@@ -19,9 +19,10 @@ public class Executor {
       int obj,
       int cls,
       Method method,
-      int[] args
+      int... args
   ) {
     var ee = Threads.getExecEnv();
+    ee.createDummyFrame();
     var frame = ee.createFrame(MetaSpace.resolveClass(cls), method);
 
     var len = method.argsLength();

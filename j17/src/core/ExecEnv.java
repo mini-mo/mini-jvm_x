@@ -48,4 +48,11 @@ public class ExecEnv {
     }
   }
 
+  public Frame createDummyFrame() {
+    ensure();
+    final Frame nf = new Frame();
+    nf.dummy = true;
+    stack[top++] = nf;
+    return nf;
+  }
 }

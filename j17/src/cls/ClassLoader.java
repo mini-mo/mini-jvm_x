@@ -143,8 +143,13 @@ public abstract class ClassLoader {
       f.name = Resolver.utf8(fi.nameIndex, cp);
       f.descriptor = Resolver.utf8(fi.descriptorIndex, cp);
 
-      switch (f.descriptor) {
-        case "I" -> {
+      char ch = f.descriptor.charAt(0);
+      switch (ch) {
+        case 'I' -> {
+          f.offset = size;
+          size += 4;
+        }
+        case 'L' -> {
           f.offset = size;
           size += 4;
         }
@@ -152,7 +157,6 @@ public abstract class ClassLoader {
           throw new IllegalStateException();
         }
       }
-
       fields[tfi++] = f;
     }
 

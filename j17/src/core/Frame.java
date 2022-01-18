@@ -15,5 +15,7 @@ public class Frame {
 
   public int returnPc;
 
+  public boolean dummy;
+
   public Frame(){}
 }
