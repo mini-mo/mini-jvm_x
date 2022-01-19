@@ -48,6 +48,7 @@ public class ExecEnv {
     }
   }
 
+  // 占位帧，用来分割 VM 内部调用与 Java 方法调用
   public Frame createDummyFrame() {
     ensure();
     final Frame nf = new Frame();

@@ -5,11 +5,10 @@ import static core.Const.*;
 import cls.ClassLoader;
 import cls.Clazz;
 import cls.Field;
-import cls.Method;
 
 public class Interpreter {
 
-  public static void executeJava() {
+  public static int executeJava() {
     var ee = Threads.getExecEnv();
     var frame = ee.current();
 
@@ -20,7 +19,10 @@ public class Interpreter {
     var si = 0;
 
     var pc = 0;
-    while (pc < code.length) {
+    while (true) {
+      if (pc >= code.length) {
+        throw new IllegalStateException("unreachable code, %d %d".formatted(pc, code.length));
+      }
       var op = code[pc++] & 0xff;
       // log
 //      System.out.println("%d %d".formatted(pc - 1, op));
@@ -144,11 +146,7 @@ public class Interpreter {
           pc = old.returnPc;
 
           if (ee.empty() || ee.current().dummy) {
-            if (ee.current().dummy) {
-              ee.popFrame();
-            }
-//            System.out.println(tmp);
-            return;
+            return tmp;
           }
 
           frame = ee.current();
@@ -165,10 +163,7 @@ public class Interpreter {
           pc = old.returnPc;
 
           if (ee.empty() || ee.current().dummy) {
-            if (ee.current().dummy) {
-              ee.popFrame();
-            }
-            return;
+            return 0;
           }
 
           frame = ee.current();

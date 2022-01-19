@@ -35,8 +35,11 @@ public class Executor {
       System.arraycopy(args, 0, frame.locals, dp, len);
     }
 
-    Interpreter.executeJava();
-    return 0;
+    try {
+      return Interpreter.executeJava();
+    } finally {
+      ee.popFrame(); // pop dummy frame
+    }
   }
 
 }
