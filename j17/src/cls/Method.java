@@ -31,10 +31,11 @@ public class Method {
         case 'D', 'J' -> {
           i += 1;
         }
-        case 'L' -> {
-          while (chars[++i] != ';') {
-            i ++;
+        case 'L', '[' -> {
+          while (chars[i + 1] != ';') {
+            i++;
           }
+          i++;
         }
       }
       s++;

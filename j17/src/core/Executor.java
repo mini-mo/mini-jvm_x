@@ -7,7 +7,7 @@ import cls.Method;
  */
 public class Executor {
 
-  public static int executeStaticMethod(
+  public static long executeStaticMethod(
       int cls,
       Method method,
       int... args
@@ -15,7 +15,7 @@ public class Executor {
     return executeMethod(0, cls, method, args);
   }
 
-  public static int executeMethod(
+  public static long executeMethod(
       int obj,
       int cls,
       Method method,

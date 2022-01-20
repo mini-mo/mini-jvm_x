@@ -8,7 +8,12 @@ import cls.Field;
 
 public class Interpreter {
 
-  public static int executeJava() {
+  /**
+   * 解释执行字节码
+   *
+   * @return 返回方法的执行结果, 当返回结果为引用类型时，为引用类型的地址，其他类型为相对应的二进制对应的 long.
+   */
+  public static long executeJava() {
     var ee = Threads.getExecEnv();
     var frame = ee.current();
 
@@ -28,62 +33,30 @@ public class Interpreter {
 //      System.out.println("%d %d".formatted(pc - 1, op));
       // end
       switch (op) {
-        case OPC_NOP -> {}
+        case OPC_NOP -> {
+        }
         case OPC_ACONST_NULL -> {
           stacks[si++] = 0;
         }
         case OPC_ICONST_M1 -> {
           stacks[si++] = -1;
         }
-        case OPC_ICONST_0 -> {
-          stacks[si++] = 0;
-        }
-        case OPC_ICONST_1 -> {
-          stacks[si++] = 1;
-        }
-        case OPC_ICONST_2 -> {
-          stacks[si++] = 2;
-        }
-        case OPC_ICONST_3 -> {
-          stacks[si++] = 3;
-        }
-        case OPC_ICONST_4 -> {
-          stacks[si++] = 4;
-        }
-        case OPC_ICONST_5 -> {
-          stacks[si++] = 5;
+        case OPC_ICONST_0, OPC_ICONST_1, OPC_ICONST_2, OPC_ICONST_3, OPC_ICONST_4, OPC_ICONST_5 -> {
+          stacks[si++] = op - OPC_ICONST_0;
         }
         case OPC_ILOAD -> {
           int idx = code[pc++] & 0xff;
           stacks[si++] = locals[idx];
         }
-        case OPC_ILOAD_0 -> {
-          stacks[si++] = locals[0];
-        }
-        case OPC_ILOAD_1 -> {
-          stacks[si++] = locals[1];
-        }
-        case OPC_ILOAD_2 -> {
-          stacks[si++] = locals[2];
-        }
-        case OPC_ILOAD_3 -> {
-          stacks[si++] = locals[3];
+        case OPC_ILOAD_0, OPC_ILOAD_1, OPC_ILOAD_2, OPC_ILOAD_3 -> {
+          stacks[si++] = locals[op - OPC_ILOAD_0];
         }
         case OPC_ISTORE -> {
           int idx = code[pc++] & 0xff;
           locals[idx] = stacks[--si];
         }
-        case OPC_ISTORE_0 -> {
-          locals[0] = stacks[--si];
-        }
-        case OPC_ISTORE_1 -> {
-          locals[1] = stacks[--si];
-        }
-        case OPC_ISTORE_2 -> {
-          locals[2] = stacks[--si];
-        }
-        case OPC_ISTORE_3 -> {
-          locals[3] = stacks[--si];
+        case OPC_ISTORE_0, OPC_ISTORE_1, OPC_ISTORE_2, OPC_ISTORE_3 -> {
+          locals[op - OPC_ISTORE_0] = stacks[--si];
         }
         case OPC_IADD -> {
           var tmp = stacks[--si] + stacks[--si];
@@ -173,17 +146,17 @@ public class Interpreter {
           locals = frame.locals;
           si = frame.si;
         }
-        case OPC_ASTORE_0 -> {
-          locals[0] = stacks[--si];
+        case OPC_ASTORE_0, OPC_ASTORE_1, OPC_ASTORE_2, OPC_ASTORE_3 -> {
+          locals[op - OPC_ASTORE_0] = stacks[--si];
         }
-        case OPC_ALOAD_0 -> {
-          stacks[si++] = locals[0];
+        case OPC_ALOAD_0, OPC_ALOAD_1, OPC_ALOAD_2, OPC_ALOAD_3 -> {
+          stacks[si++] = locals[op - OPC_ALOAD_0];
         }
         case OPC_POP -> {
           si--;
         }
         case OPC_DUP -> {
-          stacks[si++] = stacks[si-1];
+          stacks[si++] = stacks[si - 1];
         }
         case OPC_NEW -> {
           var ci = Resolver.u2(code, pc);
@@ -199,7 +172,7 @@ public class Interpreter {
           pc = pc + offset - 1;
         }
 
-        case OPC_PUTSTATIC-> {
+        case OPC_PUTSTATIC -> {
           int fi = Resolver.u2(code, pc);
           pc += 2;
           var ci = Resolver.u2(cp[fi].info);
@@ -233,8 +206,7 @@ public class Interpreter {
 //          var cls = ClassLoader.findSystemClass(cn);
 
           var fn = Resolver.utf8(Resolver.u2(cp[ndi].info), cp);
-          var fd = Resolver.utf8(Resolver.u2(cp[ndi].info,2), cp);
-
+          var fd = Resolver.utf8(Resolver.u2(cp[ndi].info, 2), cp);
 
           // TODO int
           var v = stacks[--si];
@@ -256,7 +228,7 @@ public class Interpreter {
 //          var cls = ClassLoader.findSystemClass(cn);
 
           var fn = Resolver.utf8(Resolver.u2(cp[ndi].info), cp);
-          var fd = Resolver.utf8(Resolver.u2(cp[ndi].info,2), cp);
+          var fd = Resolver.utf8(Resolver.u2(cp[ndi].info, 2), cp);
 
           // TODO int
           var p = stacks[--si];
@@ -272,7 +244,7 @@ public class Interpreter {
           var ci = Resolver.u2(code, pc);
           pc += 2;
 
-          var cn= Resolver.className(Resolver.u2(cp[ci].info), cp);
+          var cn = Resolver.className(Resolver.u2(cp[ci].info), cp);
           var mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
           var mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
 
@@ -299,8 +271,7 @@ public class Interpreter {
 
           var neo = Resolver.resolveMethod(cls, mn, mt);
           var old = frame;
-//          var neo = Resolver.resolveMethod(frame.clazz, mn, mt);
-          var nf = ee.createFrame(old.clazz, neo);
+          var nf = ee.createFrame(cls, neo);
           nf.returnPc = pc;
 
           frame = nf;

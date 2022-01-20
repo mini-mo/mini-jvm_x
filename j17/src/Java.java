@@ -44,6 +44,16 @@ public class Java {
         main = tmp;
       }
     }
+    // try default main
+    if (main == null) {
+      var tmp = Resolver.resolveMethod(cls, "main", "([Ljava/lang/String;)V");
+      if (tmp != null) {
+        main = tmp;
+        // hack for default main
+        pa = new int[]{0};
+      }
+    }
+
     if (main == null) {
       throw new IllegalStateException("not found main method");
     }
