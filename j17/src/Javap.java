@@ -1,6 +1,7 @@
 import cls.AttributeInfo;
 import cls.ClassReader;
 import cls.CpInfo;
+import cls.FieldInfo;
 import core.Const;
 import core.Flags;
 import core.Resolver;
@@ -120,6 +121,54 @@ public class Javap {
       echo("{");
       boolean blank = false;
       // fields
+      {
+        for (FieldInfo field : cf.fields) {
+          var h = "";
+          var b = false;
+          if (Flags.isAccPublic(field.accessFlags)) {
+            h = h.concat("public");
+            b = true;
+          }
+          if (Flags.isAccStatic(field.accessFlags)) {
+            if (b) {
+              h = h.concat(" ").concat("static");
+            } else {
+              h = h.concat("static");
+              b = true;
+            }
+          }
+
+          var descriptor = Resolver.utf8(field.descriptorIndex, cp);
+
+          if (!descriptor.equals("V")) {
+            char c = descriptor.charAt(0);
+            if (c == 'I') {
+              h = h.concat("int");
+            }
+          }
+
+          var name = Resolver.utf8(field.nameIndex, cp);
+          if (name.equals("<init>")) {
+            h = h.concat(" ").concat(Resolver.className(cf.thisClass, cp));
+          } else {
+            h = h.concat(" ").concat(name);
+          }
+
+          h = h.concat(";");
+
+          if (blank) {
+            echo("\n  ".concat(h));
+          } else {
+            blank = true;
+            echo("  ".concat(h));
+          }
+
+          echo("  descriptor: %s".formatted(descriptor));
+
+          String flags = String.format("  flags: (0x%04x)", field.accessFlags);
+          echo(flags);
+        }
+      }
 
       // methods
       {
@@ -251,10 +300,11 @@ public class Javap {
               var co = 0;
               var cl = code.length;
               while (co < cl) {
+                var line = co;
                 var flag = code[co++] & 0xff;
                 switch (flag) {
                   case 0x2a -> {
-                    echo("      %4d: %s".formatted(co, "aload_0"));
+                    echo("      %4d: %s".formatted(line, "aload_0"));
                   }
                   case 0xb7 -> {
                     final int isi = Resolver.u2(code, co);
@@ -265,24 +315,24 @@ public class Javap {
                       mn = "\"".concat(mn).concat("\"");
                     }
                     cm = cm.concat(mn).concat(":").concat(Resolver.methodDescriptor(Resolver.u2(ci.info, 2), cp));
-                    echo("      %4d: %-34s".formatted(co, "invokespecial #%d".formatted(isi)).concat(cm));
+                    echo("      %4d: %-34s".formatted(line, "invokespecial #%d".formatted(isi)).concat(cm));
                     co += 2;
                   }
                   case 0xb1 -> {
-                    echo("      %4d: %s".formatted(co, "return"));
+                    echo("      %4d: %s".formatted(line, "return"));
                   }
 
                   case 0x1a -> {
-                    echo("      %4d: %s".formatted(co, "iload_0"));
+                    echo("      %4d: %s".formatted(line, "iload_0"));
                   }
                   case 0x1b -> {
-                    echo("      %4d: %s".formatted(co, "iload_1"));
+                    echo("      %4d: %s".formatted(line, "iload_1"));
                   }
                   case 0x60 -> {
-                    echo("      %4d: %s".formatted(co, "iadd"));
+                    echo("      %4d: %s".formatted(line, "iadd"));
                   }
                   case 0xac -> {
-                    echo("      %4d: %s".formatted(co, "ireturn"));
+                    echo("      %4d: %s".formatted(line, "ireturn"));
                     co++;
                   }
 
