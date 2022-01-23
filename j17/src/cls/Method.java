@@ -12,6 +12,9 @@ public class Method {
   public int maxStacks;
   public byte[] code;
 
+  public int offset;
+  public int cls;
+
   // exceptions
   // line table
 

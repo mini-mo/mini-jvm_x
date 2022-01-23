@@ -5,5 +5,8 @@ public class AnimalTest {
 
     Animal cb = new CatBlue();
     cb.say();
+
+    Animal cg = new CatGreen();
+    cg.say();
   }
 }

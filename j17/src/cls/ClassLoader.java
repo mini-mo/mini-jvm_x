@@ -1,5 +1,7 @@
 package cls;
 
+import core.Const;
+import core.Flags;
 import core.MetaSpace;
 import core.Resolver;
 import java.io.File;
@@ -28,6 +30,13 @@ public abstract class ClassLoader {
     var cls = loadSystemClass(name);
     bootClasses.put(name.getBytes(), cls);
     cls.offset = MetaSpace.registerClass(cls);
+
+    // prepare
+
+    // link
+    linkClass(cls);
+
+    // init
     return cls;
   }
 
@@ -57,14 +66,123 @@ public abstract class ClassLoader {
       throw new IllegalStateException("class not found, ".concat(name));
     }
 
-    var cls = defineClass(cf);
+    return defineClass(cf);
+  }
 
-    // prepare
+  private static void linkClass(Clazz cls) {
+    if (cls.state >= Const.CLASS_LINKED) {
+      return;
+    }
+    Clazz sprCls = cls.spr;
+    if (sprCls != null) {
+      if (sprCls.state < Const.CLASS_LINKED) {
+        linkClass(sprCls); // link super
+      }
+    }
 
-    // link
+    var size = 0;
+    Field[] sprFields;
+    if (sprCls == null) {
+      sprFields = new Field[0];
+    } else {
+      size = sprCls.size;
+      sprFields = sprCls.fields;
+    }
 
-    // init
-    return cls;
+    var fields = new Field[sprFields.length + cls.fields.length];
+    var tfi = 0;
+    for (int si = 0; si < sprFields.length; si++) {
+      var sf = sprFields[si];
+      var f = new Field(sf.name, sf.descriptor, sf.accessFlags, sf.offset);
+      f.cls = cls.offset;
+      fields[tfi++] = f;
+    }
+    System.arraycopy(cls.fields, 0, fields, sprFields.length, cls.fields.length);
+
+    for (int i = 0; i < cls.fields.length; i++) {
+      var f = cls.fields[i];
+      char ch = f.descriptor.charAt(0);
+      switch (ch) {
+        case 'I', 'L' -> {
+          f.offset = size;
+          f.cls = cls.offset;
+          size += 4;
+        }
+        default -> {
+          throw new IllegalStateException();
+        }
+      }
+    }
+    cls.size = size;
+    cls.fields = fields;
+
+    // methods
+    Method[] sm = sprCls == null ? new Method[0] : sprCls.methods;
+    Method[] methods = new Method[sm.length + cls.methods.length];
+    var len = 0;
+    for (var i = 0; i < sm.length; i++) {
+      var smi = sm[i];
+      if (smi.name.startsWith("<") || Flags.isAccStatic(smi.accessFlags) || Flags.isAccPrivate(smi.accessFlags)) {
+        continue;
+      }
+      var m = new Method();
+      m.accessFlags = smi.accessFlags;
+      m.name = smi.name;
+      m.descriptor = smi.descriptor;
+      m.code = smi.code;
+      m.maxLocals = smi.maxLocals;
+      m.maxStacks = smi.maxStacks;
+      m.cls = smi.cls;
+      m.offset = len;
+      methods[len] = m;
+      len++;
+    }
+
+    int sl = len;
+    for (var i = 0; i < cls.methods.length; i++){
+      var mi = cls.methods[i];
+      var m = new Method();
+      m.accessFlags = mi.accessFlags;
+      m.name = mi.name;
+      m.descriptor = mi.descriptor;
+      m.code = mi.code;
+      m.maxLocals = mi.maxLocals;
+      m.maxStacks = mi.maxStacks;
+      m.cls = cls.offset;
+      m.offset = len;
+
+      if (mi.name.startsWith("<") || Flags.isAccStatic(mi.accessFlags) || Flags.isAccPrivate(mi.accessFlags)) {
+        methods[len] = m;
+        len++;
+        continue;
+      }
+
+      // 重写了父类方法？
+      boolean override = false;
+      for (var j = 0; j < sl; j++) {
+        var tm = methods[j];
+        if (tm.name.equals(m.name) && tm.descriptor.equals(m.descriptor) /* TODO access */) {
+          methods[j] = m;
+          override = true;
+          break;
+        }
+      }
+      if (!override) {
+        methods[len] = m;
+        len++;
+      }
+    }
+    if (len < methods.length) {
+      var tmp = new Method[len];
+      System.arraycopy(methods, 0, tmp, 0, len);
+      methods = tmp;
+    }
+    cls.methods = methods;
+
+
+    // interface methods
+
+    cls.state = Const.CLASS_LINKED;
   }
 
   private static void prepareClass(Clazz cls) {
@@ -121,45 +239,16 @@ public abstract class ClassLoader {
     }
 
     // fields
-    var size = 0;
-    Field[] sprFields;
-    if (sprCls == null) {
-      sprFields = new Field[0];
-    } else {
-      size = sprCls.size;
-      sprFields = sprCls.fields;
-    }
-
-    var fields = new Field[sprFields.length + cf.fields.length];
-    var tfi = 0;
-    for (int si = 0; si < sprFields.length; si++) {
-      var sf = sprFields[si];
-      fields[tfi++] = new Field(sf.name, sf.descriptor, sf.accessFlags, sf.offset);
-    }
-    for (int i = 0; i < cf.fields.length; i++) {
+    Field[] fields = new Field[cf.fields.length];
+    for (int i = 0; i < fields.length; i++) {
       var fi = cf.fields[i];
       var f = new Field();
       f.accessFlags = fi.accessFlags;
       f.name = Resolver.utf8(fi.nameIndex, cp);
       f.descriptor = Resolver.utf8(fi.descriptorIndex, cp);
-
-      char ch = f.descriptor.charAt(0);
-      switch (ch) {
-        case 'I' -> {
-          f.offset = size;
-          size += 4;
-        }
-        case 'L' -> {
-          f.offset = size;
-          size += 4;
-        }
-        default -> {
-          throw new IllegalStateException();
-        }
-      }
-      fields[tfi++] = f;
+      fields[i] = f;
     }
 
-    return new Clazz(name, sprCls, interfaces, fields, methods, cp, size);
+    return new Clazz(name, sprCls, interfaces, fields, methods, cp);
   }
 }

@@ -270,8 +270,11 @@ public class Interpreter {
           }
 
           var neo = Resolver.resolveMethod(cls, mn, mt);
+          if (neo == null) {
+            throw new IllegalStateException("nosuchmethod " + mn);
+          }
           var old = frame;
-          var nf = ee.createFrame(cls, neo);
+          var nf = ee.createFrame(MetaSpace.resolveClass(neo.cls), neo);
           nf.returnPc = pc;
 
           frame = nf;
@@ -319,7 +322,10 @@ public class Interpreter {
 
           var old = frame;
           var neo = Resolver.resolveMethod(frame.clazz, mn, mt);
-          var nf = ee.createFrame(old.clazz, neo);
+          if (neo == null) {
+            throw new IllegalStateException("nosuchmethod " + mn);
+          }
+          var nf = ee.createFrame(MetaSpace.resolveClass(neo.cls), neo);
           nf.returnPc = pc;
 
           frame = nf;

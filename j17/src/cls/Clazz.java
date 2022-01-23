@@ -26,8 +26,7 @@ public class Clazz {
       Clazz[] interfaces,
       Field[] fields,
       Method[] methods,
-      CpInfo[] cp,
-      int size
+      CpInfo[] cp
   ) {
     this.name = name;
     this.spr = spr;
@@ -35,7 +34,6 @@ public class Clazz {
     this.fields = fields;
     this.methods = methods;
     this.cp = cp;
-    this.size = size;
     this.state = Const.CLASS_LOADED;
   }
 }

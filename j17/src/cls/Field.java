@@ -12,6 +12,8 @@ public class Field {
 
   public int offset;
 
+  public int cls;
+
   public Field(){}
 
   public Field(

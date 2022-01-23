@@ -70,3 +70,10 @@ basic obj
 
 java -cp classes Java Obj
 ```
+
+inheritance
+
+```bash
+java -cp classes Java AnimalTest
+```
+
