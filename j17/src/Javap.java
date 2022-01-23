@@ -163,9 +163,9 @@ public class Javap {
             echo("  ".concat(h));
           }
 
-          echo("  descriptor: %s".formatted(descriptor));
+          echo("    descriptor: %s".formatted(descriptor));
 
-          String flags = String.format("  flags: (0x%04x)", field.accessFlags);
+          String flags = String.format("    flags: (0x%04x)", field.accessFlags);
           echo(flags);
         }
       }
@@ -309,7 +309,12 @@ public class Javap {
                   case 0xb7 -> {
                     final int isi = Resolver.u2(code, co);
                     final CpInfo ci = cp[isi];
-                    String cm = "// Method ".concat(Resolver.className(Resolver.u2(ci.info), cp)).concat(".");
+                    String cm = "// Method ";
+                    String ccn = Resolver.className(cf.thisClass, cp);
+                    String cn = Resolver.className(Resolver.u2(ci.info), cp);
+                    if (!ccn.equals(cn)) {
+                      cm = cm.concat(cn).concat(".");
+                    }
                     String mn = Resolver.methodName(Resolver.u2(ci.info, 2), cp);
                     if (mn.startsWith("<")) {
                       mn = "\"".concat(mn).concat("\"");
@@ -334,6 +339,79 @@ public class Javap {
                   case 0xac -> {
                     echo("      %4d: %s".formatted(line, "ireturn"));
                     co++;
+                  }
+                  case 0xbb -> {
+                    final int isi = Resolver.u2(code, co);
+                    final CpInfo ci = cp[isi];
+                    String cm = "// class ";
+                    String cn = Resolver.className(cf.thisClass, cp);
+                    cm = cm.concat(cn);
+                    echo("      %4d: %-34s".formatted(line, "new           #%d".formatted(isi)).concat(cm));
+                    co += 2;
+                  }
+                  case 0x59 -> {
+                    echo("      %4d: %-34s".formatted(line, "dup"));
+                  }
+                  case 0x4b -> {
+                    echo("      %4d: %-34s".formatted(line, "astore_0"));
+                  }
+                  case 0x4c -> {
+                    echo("      %4d: %-34s".formatted(line, "astore_1"));
+                  }
+                  case 0x4d -> {
+                    echo("      %4d: %-34s".formatted(line, "astore_2"));
+                  }
+                  case 0x4e -> {
+                    echo("      %4d: %-34s".formatted(line, "astore_3"));
+                  }
+                  case 0x2 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_m1"));
+                  }
+                  case 0x3 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_0"));
+                  }
+                  case 0x4 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_1"));
+                  }
+                  case 0x5 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_2"));
+                  }
+                  case 0x6 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_3"));
+                  }
+                  case 0x7 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_4"));
+                  }
+                  case 0x8 -> {
+                    echo("      %4d: %-34s".formatted(line, "iconst_5"));
+                  }
+                  case 0xb4 -> {
+                    final int isi = Resolver.u2(code, co);
+                    final CpInfo ci = cp[isi];
+                    String cm = "// Field ";
+                    String mn = Resolver.fieldName(Resolver.u2(ci.info, 2), cp);
+                    cm = cm.concat(mn).concat(":").concat(Resolver.methodDescriptor(Resolver.u2(ci.info, 2), cp));
+                    echo("      %4d: %-34s".formatted(line, "getfield      #%d".formatted(isi)).concat(cm));
+                    co += 2;
+                  }
+                  case 0xb5 -> {
+                    final int isi = Resolver.u2(code, co);
+                    final CpInfo ci = cp[isi];
+                    String cm = "// Field ";
+                    String mn = Resolver.fieldName(Resolver.u2(ci.info, 2), cp);
+                    cm = cm.concat(mn).concat(":").concat(Resolver.methodDescriptor(Resolver.u2(ci.info, 2), cp));
+                    echo("      %4d: %-34s".formatted(line, "putfield      #%d".formatted(isi)).concat(cm));
+                    co += 2;
+                  }
+                  case 0xb8 -> {
+                    final int isi = Resolver.u2(code, co);
+                    final CpInfo ci = cp[isi];
+                    String cm = "// Method ";
+                    String cn = Resolver.className(Resolver.u2(ci.info, 0), cp);
+                    String mn = Resolver.methodName(Resolver.u2(ci.info, 2), cp);
+                    cm = cm.concat(cn).concat(".").concat(mn).concat(":").concat(Resolver.methodDescriptor(Resolver.u2(ci.info, 2), cp));
+                    echo("      %4d: %-34s".formatted(line, "invokestatic  #%d".formatted(isi)).concat(cm));
+                    co += 2;
                   }
 
                   default -> {
