@@ -26,6 +26,18 @@ public abstract class Resolver {
     return (raw[offset] << 8) | (raw[offset + 1]);
   }
 
+  /**
+   * 两个 u1 合并 s2
+   *
+   * > The immediate unsigned byte1 and byte2 values are assembled into an intermediate short, where the value of the short is (byte1 << 8) | byte2. The intermediate value is then sign-extended to an int value. That value is pushed onto the operand stack.
+   */
+  public static int c2(
+      byte[] raw,
+      int offset
+  ) {
+    return (raw[offset] << 8) | (raw[offset + 1] & 0xff);
+  }
+
   public static int u4(byte[] raw) {
     return u4(raw, 0);
   }

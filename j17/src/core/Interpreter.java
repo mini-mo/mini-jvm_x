@@ -44,6 +44,15 @@ public class Interpreter {
         case OPC_ICONST_0, OPC_ICONST_1, OPC_ICONST_2, OPC_ICONST_3, OPC_ICONST_4, OPC_ICONST_5 -> {
           stacks[si++] = op - OPC_ICONST_0;
         }
+        case OPC_BIPUSH -> {
+          int x = Resolver.s1(code, pc++);
+          stacks[si++] = x;
+        }
+        case OPC_SIPUSH -> {
+          int x = Resolver.c2(code, pc);
+          pc += 2;
+          stacks[si++] = x;
+        }
         case OPC_ILOAD -> {
           int idx = code[pc++] & 0xff;
           stacks[si++] = locals[idx];
@@ -109,6 +118,55 @@ public class Interpreter {
           var next = Resolver.s2(code, pc);
           if (v1 > v2) {
             pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
+        }
+        case OPC_IF_ICMPEQ -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var next = Resolver.s2(code, pc);
+          if (v1 == v2) {
+            pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
+        }
+        case OPC_IF_ICMPNE -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var next = Resolver.s2(code, pc);
+          if (v1 != v2) {
+            pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
+        }
+        case OPC_IF_ICMPLT -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var next = Resolver.s2(code, pc);
+          if (v1 < v2) {
+            pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
+        }
+        case OPC_IF_ICMPLE -> {
+          var v2 = stacks[--si];
+          var v1 = stacks[--si];
+          var next = Resolver.s2(code, pc);
+          if (v1 <= v2) {
+            pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
+        }
+        case OPC_IFEQ -> {
+          var tmp = stacks[--si];
+          var next = Resolver.s2(code, pc);
+          if (tmp == 0) {
+            pc = pc + next-1;
             continue;
           }
           pc += 2;
