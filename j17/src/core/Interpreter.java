@@ -5,6 +5,7 @@ import static core.Const.*;
 import cls.ClassLoader;
 import cls.Clazz;
 import cls.Field;
+import utils.LongUtil;
 
 public class Interpreter {
 
@@ -44,6 +45,16 @@ public class Interpreter {
         case OPC_ICONST_0, OPC_ICONST_1, OPC_ICONST_2, OPC_ICONST_3, OPC_ICONST_4, OPC_ICONST_5 -> {
           stacks[si++] = op - OPC_ICONST_0;
         }
+        case OPC_LCONST_0 -> {
+          int[] r = LongUtil.split(0L);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
+        }
+        case OPC_LCONST_1 -> {
+          int[] r = LongUtil.split(1L);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
+        }
         case OPC_BIPUSH -> {
           int x = Resolver.s1(code, pc++);
           stacks[si++] = x;
@@ -71,6 +82,13 @@ public class Interpreter {
           var tmp = stacks[--si] + stacks[--si];
           stacks[si++] = tmp;
         }
+        case OPC_LADD -> {
+          var tmp1 = LongUtil.merge(stacks[--si], stacks[--si]);
+          var tmp2 = LongUtil.merge(stacks[--si], stacks[--si]);
+          int[] r = LongUtil.split(tmp1 + tmp2);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
+        }
         case OPC_IDIV -> {
           var v2 = stacks[--si];
           var v1 = stacks[--si];
@@ -83,11 +101,27 @@ public class Interpreter {
           var tmp = v1 - v2;
           stacks[si++] = tmp;
         }
+        case OPC_LSUB -> {
+          var v2 = LongUtil.merge(stacks[--si], stacks[--si]);
+          var v1 = LongUtil.merge(stacks[--si], stacks[--si]);
+          var tmp = v1 - v2;
+          int[] r = LongUtil.split(tmp);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
+        }
         case OPC_IMUL -> {
           var v2 = stacks[--si];
           var v1 = stacks[--si];
           var tmp = v1 * v2;
           stacks[si++] = tmp;
+        }
+        case OPC_LMUL -> {
+          var v2 = LongUtil.merge(stacks[--si], stacks[--si]);
+          var v1 = LongUtil.merge(stacks[--si], stacks[--si]);
+          var tmp = v1 * v2;
+          int[] r = LongUtil.split(tmp);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
         }
         case OPC_IREM -> {
           var v2 = stacks[--si];
@@ -101,6 +135,26 @@ public class Interpreter {
           var step = Resolver.s1(code, pc);
           pc++;
           locals[idx] += step;
+        }
+        case OPC_LCMP -> {
+          long v2 = LongUtil.merge(stacks[--si], stacks[--si]);
+          long v1 = LongUtil.merge(stacks[--si], stacks[--si]);
+          if (v1 == v2) {
+            stacks[si++] = 0;
+          } else if (v1 < v2) {
+            stacks[si++] = -1;
+          } else {
+            stacks[si++] = 1;
+          }
+        }
+        case OPC_IFGT -> {
+          int tmp = stacks[--si];
+          if (tmp > 0) {
+            var next = Resolver.s2(code, pc);
+            pc = pc + next - 1;
+            continue;
+          }
+          pc += 2;
         }
         case OPC_IF_ICMPGE -> {
           var v2 = stacks[--si];
@@ -189,6 +243,26 @@ public class Interpreter {
 
           stacks[si++] = tmp;
         }
+        case OPC_LRETURN -> {
+          var tmp = LongUtil.merge(stacks[--si], stacks[--si]);
+          var old = ee.popFrame();
+          pc = old.returnPc;
+
+          if (ee.empty() || ee.current().dummy) {
+            return tmp;
+          }
+
+          frame = ee.current();
+          code = frame.code;
+          cp = frame.clazz.cp;
+          stacks = frame.stacks;
+          locals = frame.locals;
+          si = frame.si;
+
+          int[] r = LongUtil.split(tmp);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
+        }
         case OPC_RETURN -> {
           var old = ee.popFrame();
           pc = old.returnPc;
@@ -206,6 +280,10 @@ public class Interpreter {
         }
         case OPC_ASTORE_0, OPC_ASTORE_1, OPC_ASTORE_2, OPC_ASTORE_3 -> {
           locals[op - OPC_ASTORE_0] = stacks[--si];
+        }
+        case OPC_LLOAD_0, OPC_LLOAD_1, OPC_LLOAD_2, OPC_LLOAD_3 -> {
+          stacks[si++] = locals[op - OPC_LLOAD_0];
+          stacks[si++] = locals[op - OPC_LLOAD_0 + 1];
         }
         case OPC_ALOAD_0, OPC_ALOAD_1, OPC_ALOAD_2, OPC_ALOAD_3 -> {
           stacks[si++] = locals[op - OPC_ALOAD_0];

@@ -32,7 +32,7 @@ public class Method {
       }
       switch (ch) {
         case 'D', 'J' -> {
-          i += 1;
+          s++;
         }
         case 'L', '[' -> {
           while (chars[i + 1] != ';') {
