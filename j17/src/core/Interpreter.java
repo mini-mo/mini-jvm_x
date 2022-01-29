@@ -25,6 +25,10 @@ public class Interpreter {
 
     var pc = 0;
     while (true) {
+      if (ee.status != THREAD_RUNNING) {
+        // 空转
+        continue;
+      }
       if (pc >= code.length) {
         throw new IllegalStateException("unreachable code, %d %d".formatted(pc, code.length));
       }
@@ -214,7 +218,8 @@ public class Interpreter {
           si--;
         }
         case OPC_DUP -> {
-          stacks[si++] = stacks[si - 1];
+          int tmp = stacks[si - 1];
+          stacks[si++] = tmp;
         }
         case OPC_NEW -> {
           var ci = Resolver.u2(code, pc);
@@ -240,7 +245,7 @@ public class Interpreter {
           Clazz cls = Resolver.resolveClass(cn);
 
           Field f = Resolver.resolveField(cls, Resolver.fieldName(ndi, cp), Resolver.fieldDescriptor(ndi, cp));
-          Heap.setInt(cls.offset, f.offset, stacks[--si]);
+          f.value = stacks[--si];
         }
         case OPC_GETSTATIC -> {
           int fi = Resolver.u2(code, pc);
@@ -252,7 +257,7 @@ public class Interpreter {
           Clazz cls = Resolver.resolveClass(cn);
           Field f = Resolver.resolveField(cls, Resolver.fieldName(ndi, cp), Resolver.fieldDescriptor(ndi, cp));
 
-          stacks[si++] = Heap.getInt(cls.offset, f.offset);
+          stacks[si++] = (int) f.value;
         }
         case OPC_PUTFIELD -> {
           var fi = Resolver.u2(code, pc);
@@ -298,7 +303,6 @@ public class Interpreter {
           stacks[si++] = v;
         }
         case OPC_INVOKEVIRTUAL -> {
-          // TODO ...
           var ci = Resolver.u2(code, pc);
           pc += 2;
 
@@ -331,8 +335,17 @@ public class Interpreter {
           if (neo == null) {
             throw new IllegalStateException("nosuchmethod " + mn);
           }
+
+          var clz = MetaSpace.resolveClass(neo.cls);
+          key = clz.name.concat("_").concat(mn).concat("_").concat(mt);
+          nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          if (nm != null) { // native
+            si = nm.invoke(stacks, si);
+            continue;
+          }
+
           var old = frame;
-          var nf = ee.createFrame(MetaSpace.resolveClass(neo.cls), neo);
+          var nf = ee.createFrame(clz, neo);
           nf.returnPc = pc;
 
           frame = nf;
@@ -355,8 +368,46 @@ public class Interpreter {
 //          throw new IllegalStateException();
         }
         case OPC_INVOKESPECIAL -> {
-          si--;
+          var ci = Resolver.u2(code, pc);
           pc += 2;
+
+          var cls = Resolver.className(Resolver.u2(cp[ci].info), cp);
+          var mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
+          var mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
+
+          var key = cls.concat("_").concat(mn).concat("_").concat(mt);
+          var nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          if (nm != null) { // native
+            si = nm.invoke(stacks, si);
+            continue;
+          }
+
+          Clazz clz = Resolver.resolveClass(cls);
+
+          var old = frame;
+          var neo = Resolver.resolveMethod(clz, mn, mt);
+          if (neo == null) {
+            throw new IllegalStateException("nosuchmethod " + mn);
+          }
+          var nf = ee.createFrame(MetaSpace.resolveClass(neo.cls), neo);
+          nf.returnPc = pc;
+
+          frame = nf;
+          code = frame.code;
+          stacks = frame.stacks;
+          locals = frame.locals;
+          cp = frame.clazz.cp;
+
+          // args
+          var len = neo.argsLength();
+          si -= len;
+          if (len > 0) {
+            System.arraycopy(old.stacks, si, locals, 0, len);
+          }
+          old.si = si;
+
+          si = 0;
+          pc = 0;
         }
         case OPC_INVOKESTATIC -> {
           var ci = Resolver.u2(code, pc);
@@ -394,6 +445,63 @@ public class Interpreter {
 
           // args
           var len = neo.argsLength();
+          si -= len;
+          if (len > 0) {
+            System.arraycopy(old.stacks, si, locals, 0, len);
+          }
+          old.si = si;
+
+          si = 0;
+          pc = 0;
+
+          continue;
+//          throw new IllegalStateException();
+        }
+        case OPC_INVOKEINTERFACE -> {
+          var ci = Resolver.u2(code, pc);
+          pc += 2;
+          // code 0
+          pc += 2;
+
+          var cn = Resolver.className(Resolver.u2(cp[ci].info), cp);
+          var mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
+          var mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
+
+          var key = cn.concat("_").concat(mn).concat("_").concat(mt);
+          var nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          if (nm != null) { // native
+            si = nm.invoke(stacks, si);
+            continue;
+          }
+          var ocs = ClassLoader.findSystemClass(cn);
+          var om = Resolver.resolveMethod(ocs, mn, mt);
+          int len = om.argsLength();
+
+          int self = stacks[si - len];
+          var cls = MetaSpace.resolveClass(Heap.getInt(self, -8));
+
+          key = cls.name.concat("_").concat(mn).concat("_").concat(mt);
+          nm = MetaSpace.resolveNativeMethod(key.getBytes());
+          if (nm != null) { // native
+            si = nm.invoke(stacks, si);
+            continue;
+          }
+
+          var neo = Resolver.resolveIMethod(cls, mn, mt);
+          if (neo == null) {
+            throw new IllegalStateException("nosuchmethod " + mn);
+          }
+          var old = frame;
+          var nf = ee.createFrame(MetaSpace.resolveClass(neo.cls), neo);
+          nf.returnPc = pc;
+
+          frame = nf;
+          code = frame.code;
+          stacks = frame.stacks;
+          locals = frame.locals;
+          cp = frame.clazz.cp;
+
+          // args
           si -= len;
           if (len > 0) {
             System.arraycopy(old.stacks, si, locals, 0, len);

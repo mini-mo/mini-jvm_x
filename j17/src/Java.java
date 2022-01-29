@@ -23,7 +23,7 @@ public class Java {
       pa[i - 1] = Integer.parseInt(args[i]);
     }
 
-    var cls = ClassLoader.findSystemClass(name);
+    var cls = Resolver.resolveClass(name);
 
     var main = Resolver.resolveMethod(cls, "main", "()V"); // 无参
     if (pa.length == 1) {
@@ -66,6 +66,9 @@ public class Java {
     Natives.init();
     Threads.init();
     Heap.init(10 * 1024 * 1024); // 10 MB
+    Threads.init2();
+
+    Resolver.resolveClass("java/lang/System");
   }
 }
   

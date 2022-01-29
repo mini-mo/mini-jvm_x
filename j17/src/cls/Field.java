@@ -14,6 +14,8 @@ public class Field {
 
   public int cls;
 
+  public long value;
+
   public Field(){}
 
   public Field(

@@ -37,6 +37,9 @@ public class Executor {
 
     try {
       return Interpreter.executeJava();
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
     } finally {
       ee.popFrame(); // pop dummy frame
     }

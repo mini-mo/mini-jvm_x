@@ -244,4 +244,8 @@ public interface Const {
   int CLASS_LOADER = 64;
   int CLASS_CLASH = 128;
   int ANONYMOUS = 256;
+
+  // thread
+  int THREAD_RUNNING = 1;
+  int THREAD_DONE = 2;
 }

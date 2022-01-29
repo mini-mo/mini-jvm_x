@@ -10,6 +10,7 @@ public class Clazz {
   public String name;
   public Field[] fields;
   public Method[] methods;
+  public Method[] imethods;
   public CpInfo[] cp;
 
   public Clazz spr;

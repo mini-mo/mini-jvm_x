@@ -117,6 +117,19 @@ public abstract class Resolver {
     return null;
   }
 
+  public static Method resolveIMethod(
+      Clazz cls,
+      String name,
+      String descritor
+  ) {
+    for (Method m : cls.imethods) {
+      if (m.name.equals(name) && m.descriptor.equals(descritor)) {
+        return m;
+      }
+    }
+    return null;
+  }
+
   public static int u1(
       byte[] code,
       int pc
@@ -151,13 +164,32 @@ public abstract class Resolver {
       throw new IllegalStateException();
     }
 
-    Method m = resolveMethod(cls, "<clinit>", "()V");
+    // cinit
+    clinit(cls);
+
+    return cls;
+  }
+
+  public static Clazz clinit(Clazz cls) {
     if (cls.state >= Const.CLASS_INITING) {
       return cls;
     }
+    // spr
+    if (cls.spr != null && cls.spr.state < Const.CLASS_INITING) {
+      clinit(cls.spr);
+    }
+
+    Method m = resolveMethod(cls, "<clinit>", "()V");
+    if (m == null) { // 无类初始化方法
+      cls.state = Const.CLASS_INITED;
+      return cls;
+    }
+
     cls.state = Const.CLASS_INITING;
     Executor.executeStaticMethod(cls.offset, m);
     cls.state = Const.CLASS_INITED;
+
     return cls;
   }
+
 }
