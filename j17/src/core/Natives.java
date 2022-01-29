@@ -11,6 +11,11 @@ public abstract class Natives {
       return top - 1;
     }));
 
+    MetaSpace.registerNativeMethod("RT_println_(J)V".getBytes(), ((ostack, top) -> {
+      System.out.println(ostack[top - 1]);
+      return top - 1;
+    }));
+
     MetaSpace.registerNativeMethod("RT_begin_()V".getBytes(), ((ostack, top) -> {
       stopwatch = System.currentTimeMillis();
       return top;
@@ -28,9 +33,16 @@ public abstract class Natives {
       return top - 2;
     }));
 
+
+    MetaSpace.registerNativeMethod("java/io/NOutStream_println_(J)V".getBytes(), ((ostack, top) -> {
+      System.out.println(ostack[top - 1]);
+      return top - 1;
+    }));
+
     MetaSpace.registerNativeMethod("java/lang/Thread_start_()V".getBytes(), (((ostack, top) -> {
       Threads.createJavaThread(ostack[top - 1]);
       return top - 1;
     })));
+
   }
 }

@@ -1,9 +1,12 @@
 import cls.ClassLoader;
+import cls.Method;
 import core.Executor;
 import core.Heap;
 import core.Natives;
 import core.Resolver;
 import core.Threads;
+import utils.LongUtil;
+
 import java.io.IOException;
 
 /**
@@ -18,28 +21,53 @@ public class Java {
 
     init();
 
-    int[] pa = new int[args.length - 1];
+    boolean longFlag = args.length > 1
+            && (args[1].endsWith("L") || args[1].endsWith("l") || Long.parseLong(args[1]) > Integer.MAX_VALUE);
+    int[] pa = new int[longFlag ? ((args.length - 1) * 2) : args.length - 1];
     for (int i = 1; i < args.length; i++) {
-      pa[i - 1] = Integer.parseInt(args[i]);
+      if (longFlag){
+        long val = (args[i].endsWith("L") || args[i].endsWith("l"))
+                ? Long.parseLong(args[i].substring(0, args[i].length() - 1)) : Long.parseLong(args[i]);
+        int[] r = LongUtil.split(val);
+        pa[i - 1] = r[0];
+        pa[i++] = r[1];
+      } else {
+        pa[i - 1] = Integer.parseInt(args[i]);
+      }
     }
 
     var cls = Resolver.resolveClass(name);
 
     var main = Resolver.resolveMethod(cls, "main", "()V"); // 无参
-    if (pa.length == 1) {
-      var tmp = Resolver.resolveMethod(cls, "main", "(I)V");
+    if (args.length == 2) {
+      Method tmp;
+      if (longFlag) {
+        tmp = Resolver.resolveMethod(cls, "main", "(J)V");
+      } else {
+        tmp = Resolver.resolveMethod(cls, "main", "(I)V");
+      }
       if (tmp != null) {
         main = tmp;
       }
     }
-    if (pa.length == 2) {
-      var tmp = Resolver.resolveMethod(cls, "main", "(II)V");
+    if (args.length == 3) {
+      Method tmp;
+      if (longFlag) {
+        tmp = Resolver.resolveMethod(cls, "main", "(JJ)V");
+      } else {
+        tmp = Resolver.resolveMethod(cls, "main", "(II)V");
+      }
       if (tmp != null) {
         main = tmp;
       }
     }
-    if (pa.length >= 3) { // 最多三个参数
-      var tmp = Resolver.resolveMethod(cls, "main", "(III)V");
+    if (args.length >= 4) { // 最多三个参数
+      Method tmp;
+      if (longFlag) {
+        tmp = Resolver.resolveMethod(cls, "main", "(JJJ)V");
+      } else {
+        tmp = Resolver.resolveMethod(cls, "main", "(III)V");
+      }
       if (tmp != null) {
         main = tmp;
       }
