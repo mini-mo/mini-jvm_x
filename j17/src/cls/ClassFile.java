@@ -3,6 +3,7 @@ package cls;
 // https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.1
 public final class ClassFile {
 
+  public final String name;
   public final int magic;
   public final int minorVersion;
   public final int majorVersion;
@@ -17,6 +18,7 @@ public final class ClassFile {
   public final AttributeInfo[] attributes;
 
   public ClassFile(
+      String name,
       int magic,
       int minorVersion,
       int majorVersion,
@@ -30,6 +32,7 @@ public final class ClassFile {
       MethodInfo[] methods,
       AttributeInfo[] attributes
   ) {
+    this.name = name;
     this.magic = magic;
     this.minorVersion = minorVersion;
     this.majorVersion = majorVersion;

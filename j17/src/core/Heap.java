@@ -12,7 +12,7 @@ public abstract class Heap {
    * 分配内存
    * @param len 对象大小
    */
-  public static int malloc(int len) {
+  public static synchronized int malloc(int len) {
     // object header 8 byte
     // 8 字节对齐
     var n = (len + 8 + 8 - 1) & ~(8 - 1);
@@ -79,15 +79,16 @@ public abstract class Heap {
       int point,
       int offset
   ) {
-    return (short) ((mem[point + offset] << 8) + (mem[point + offset + 1] << 0));
+    return (short) (((mem[point + offset] & 0xff) << 8) + ((mem[point + offset + 1] & 0xff) << 0));
   }
 
   public static int getInt(
       int point,
       int offset
   ) {
-    return ((mem[point + offset] << 24) + (mem[point + offset + 1] << 16) + (mem[point + offset + 2] << 8) + (
-        mem[point + offset + 3] << 0));
+    return (((mem[point + offset] & 0xff) << 24) + ((mem[point + offset + 1] & 0xff) << 16) + (
+        (mem[point + offset + 2] & 0xff) << 8) + (
+        (mem[point + offset + 3] & 0xff) << 0));
   }
 
   public static long getLong(

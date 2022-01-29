@@ -12,6 +12,8 @@ public class ExecEnv {
   private Frame[] stack;
   private int top = 0;
 
+  public volatile int status;
+
   public ExecEnv() {
     stack = new Frame[128]; // default 128
   }

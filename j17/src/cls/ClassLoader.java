@@ -42,6 +42,7 @@ public abstract class ClassLoader {
 
   private static Clazz loadSystemClass(String name) {
     var cn = name.replace('.', '/');
+    var ccn = cn;
     cn = cn.concat(".class");
 
     ClassFile cf = null;
@@ -54,7 +55,7 @@ public abstract class ClassLoader {
       try {
         var fis = new FileInputStream(f);
         var bytes = fis.readAllBytes();
-        cf = ClassReader.read(bytes);
+        cf = ClassReader.read(ccn, bytes);
         break;
       } catch (Exception e) {
         e.printStackTrace();
@@ -139,7 +140,7 @@ public abstract class ClassLoader {
     }
 
     int sl = len;
-    for (var i = 0; i < cls.methods.length; i++){
+    for (var i = 0; i < cls.methods.length; i++) {
       var mi = cls.methods[i];
       var m = new Method();
       m.accessFlags = mi.accessFlags;
@@ -148,10 +149,10 @@ public abstract class ClassLoader {
       m.code = mi.code;
       m.maxLocals = mi.maxLocals;
       m.maxStacks = mi.maxStacks;
-      m.cls = cls.offset;
       m.offset = len;
 
       if (mi.name.startsWith("<") || Flags.isAccStatic(mi.accessFlags) || Flags.isAccPrivate(mi.accessFlags)) {
+        m.cls = cls.offset;
         methods[len] = m;
         len++;
         continue;
@@ -162,12 +163,14 @@ public abstract class ClassLoader {
       for (var j = 0; j < sl; j++) {
         var tm = methods[j];
         if (tm.name.equals(m.name) && tm.descriptor.equals(m.descriptor) /* TODO access */) {
+          m.cls = tm.cls;
           methods[j] = m;
           override = true;
           break;
         }
       }
       if (!override) {
+        m.cls = cls.offset;
         methods[len] = m;
         len++;
       }
@@ -179,8 +182,97 @@ public abstract class ClassLoader {
     }
     cls.methods = methods;
 
-
     // interface methods
+    // 1. 直接实现的接口
+    // 2. 从父类继承的接口
+    int isize = 0;
+    for (Clazz intr : cls.interfaces) {
+      isize += intr.methods.length;
+      isize += intr.imethods.length;
+    }
+    if (sprCls != null) {
+      for (Clazz intr : sprCls.interfaces) {
+        isize += intr.methods.length;
+        isize += intr.imethods.length;
+      }
+    }
+    Method[] ims = new Method[isize];
+    int i = 0;
+    for (Clazz intr : cls.interfaces) {
+      for (Method im : intr.methods) {
+        var m = new Method();
+        m.accessFlags = im.accessFlags;
+        m.name = im.name;
+        m.descriptor = im.descriptor;
+        m.code = im.code;
+        m.maxLocals = im.maxLocals;
+        m.maxStacks = im.maxStacks;
+        m.cls = cls.offset;
+        m.offset = i;
+        ims[i++] = m;
+      }
+
+      for (Method im : intr.imethods) {
+        var m = new Method();
+        m.accessFlags = im.accessFlags;
+        m.name = im.name;
+        m.descriptor = im.descriptor;
+        m.code = im.code;
+        m.maxLocals = im.maxLocals;
+        m.maxStacks = im.maxStacks;
+        m.cls = cls.offset;
+        m.offset = i;
+        ims[i++] = m;
+      }
+    }
+
+    if (sprCls != null) {
+      for (Clazz intr : sprCls.interfaces) {
+        for (Method im : intr.methods) {
+          var m = new Method();
+          m.accessFlags = im.accessFlags;
+          m.name = im.name;
+          m.descriptor = im.descriptor;
+          m.code = im.code;
+          m.maxLocals = im.maxLocals;
+          m.maxStacks = im.maxStacks;
+          m.cls = cls.offset;
+          m.offset = i;
+          ims[i++] = m;
+        }
+
+        for (Method im : intr.imethods) {
+          var m = new Method();
+          m.accessFlags = im.accessFlags;
+          m.name = im.name;
+          m.descriptor = im.descriptor;
+          m.code = im.code;
+          m.maxLocals = im.maxLocals;
+          m.maxStacks = im.maxStacks;
+          m.cls = cls.offset;
+          m.offset = i;
+          ims[i++] = m;
+        }
+      }
+    }
+
+    for (Method m : ims) {
+      for (Method cm : cls.methods) {
+        if (m.name.equals(cm.name) && m.descriptor.equals(cm.descriptor) && !Flags.isAccPrivate(cm.accessFlags)) { // TODO access
+          m.accessFlags = cm.accessFlags;
+          m.code = cm.code;
+          m.maxLocals = cm.maxLocals;
+          m.maxStacks = cm.maxStacks;
+          m.cls = cm.cls;
+        }
+      }
+    }
+
+    if (i < ims.length) {
+      System.out.println("xxxxxxx");
+    }
+
+    cls.imethods = ims;
 
     cls.state = Const.CLASS_LINKED;
   }
@@ -192,7 +284,7 @@ public abstract class ClassLoader {
   public static Clazz defineClass(ClassFile cf) {
     var cp = cf.cp;
     Clazz sprCls = null;
-    var name = Resolver.className(cf.thisClass, cp);
+    var name = cf.name;
     // super
     if (cf.superClass == 0) {
       if (!name.equals("java/lang/Object")) {

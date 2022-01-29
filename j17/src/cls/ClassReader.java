@@ -11,7 +11,7 @@ import core.Resolver;
 
 public class ClassReader {
 
-  public static ClassFile read(byte[] raw) {
+  public static ClassFile read(String name, byte[] raw) {
     int cur = 0;
     var magic = Resolver.u4(raw);
     cur += 4;
@@ -128,7 +128,7 @@ public class ClassReader {
       attributes[i] = new AttributeInfo(attributeNameIndex, rb);
     }
 
-    return new ClassFile(magic,
+    return new ClassFile(name, magic,
         minor,
         major,
         constantPoolCount,

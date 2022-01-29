@@ -77,3 +77,14 @@ inheritance
 java -cp classes Java AnimalTest
 ```
 
+recursive class init
+
+```bash
+java -cp classes Java ClassInitTest3
+```
+
+recursive object init
+
+```bash
+java -cp classes Java ObjectInitTest3
+```
