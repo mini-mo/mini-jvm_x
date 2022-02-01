@@ -311,13 +311,13 @@ public class Interpreter {
           int val = stacks[--si];
           int idx = stacks[--si];
           int point = stacks[--si];
-          Heap.setInt(point, (idx * 4), val);
+          Heap.setInt(point, 4 + (idx * 4), val);
         }
         case OPC_LASTORE -> {
           long val = LongUtil.merge(stacks[--si], stacks[--si]);
           int idx = stacks[--si];
           int point = stacks[--si];
-          Heap.setLong(point, idx * 8, val);
+          Heap.setLong(point, 4 + (idx * 8), val);
         }
         case OPC_LLOAD_0, OPC_LLOAD_1, OPC_LLOAD_2, OPC_LLOAD_3 -> {
           stacks[si++] = locals[op - OPC_LLOAD_0];
@@ -329,13 +329,13 @@ public class Interpreter {
         case OPC_IALOAD -> {
           int idx = stacks[--si];
           int point = stacks[--si];
-          int val = Heap.getInt(point, (idx * 4));
+          int val = Heap.getInt(point, 4 + (idx * 4));
           stacks[si++] = val;
         }
         case OPC_LALOAD -> {
           int idx = stacks[--si];
           int point = stacks[--si];
-          long val = Heap.getLong(point, (idx * 8));
+          long val = Heap.getLong(point, 4 + (idx * 8));
           int[] r = LongUtil.split(val);
           stacks[si++] = r[0];
           stacks[si++] = r[1];
@@ -391,7 +391,7 @@ public class Interpreter {
             default -> throw new IllegalStateException();
           };
           int point = Heap.malloc(size);
-          Heap.setInt(point, -8, count);
+          Heap.setInt(point, 0, count);
           stacks[si++] = point;
         }
         case OPC_ARRAYLENGTH -> {
@@ -399,7 +399,7 @@ public class Interpreter {
           if (point == 0) {
             throw new NullPointerException();
           }
-          int length = Heap.getInt(point, -8);
+          int length = Heap.getInt(point, 0);
           stacks[si++] = length;
         }
         case OPC_GOTO -> {
