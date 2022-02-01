@@ -104,6 +104,11 @@ public class Interpreter {
         case OPC_ISTORE_0, OPC_ISTORE_1, OPC_ISTORE_2, OPC_ISTORE_3 -> {
           locals[op - OPC_ISTORE_0] = stacks[--si];
         }
+        case OPC_LSTORE_0, OPC_LSTORE_1, OPC_LSTORE_2, OPC_LSTORE_3 -> {
+          int idx = op - OPC_LSTORE_0;
+          locals[idx + 1] = stacks[--si];
+          locals[idx] = stacks[--si];
+        }
         case OPC_IADD -> {
           var tmp = stacks[--si] + stacks[--si];
           stacks[si++] = tmp;
@@ -246,7 +251,7 @@ public class Interpreter {
           var tmp = stacks[--si];
           var next = Resolver.s2(code, pc);
           if (tmp == 0) {
-            pc = pc + next-1;
+            pc = pc + next - 1;
             continue;
           }
           pc += 2;
@@ -365,29 +370,29 @@ public class Interpreter {
           pc += 1;
           int size = switch (type) {
             case 4 ->
-                    //BOOLEAN
-                    count;
+                //BOOLEAN
+                count;
             case 5 ->
-                    //CHAR
-                    count * 2;
+                //CHAR
+                count * 2;
             case 6 ->
-                    //FLOAT
-                    count * 4;
+                //FLOAT
+                count * 4;
             case 7 ->
-                    //DOUBLE
-                    count * 8;
+                //DOUBLE
+                count * 8;
             case 8 ->
-                    //BYTE
-                    count;
+                //BYTE
+                count;
             case 9 ->
-                    //SHORT
-                    count * 2;
+                //SHORT
+                count * 2;
             case 10 ->
-                    //INT
-                    count * 4;
+                //INT
+                count * 4;
             case 11 ->
-                    //LONG
-                    count * 8;
+                //LONG
+                count * 8;
             default -> throw new IllegalStateException();
           };
           int point = Heap.malloc(size);
@@ -588,24 +593,25 @@ public class Interpreter {
           var mn = Resolver.methodName(Resolver.u2(cp[ci].info, 2), cp);
           var mt = Resolver.methodDescriptor(Resolver.u2(cp[ci].info, 2), cp);
 
-          var key = cls.concat("_").concat(mn).concat("_").concat(mt);
-          var nm = MetaSpace.resolveNativeMethod(key.getBytes());
-          if (nm != null) { // native
+          // find method
+          Clazz clz = Resolver.resolveClass(cls);
+
+          var old = frame;
+          var neo = Resolver.resolveMethod(clz, mn, mt);
+          if (neo == null) {
+            throw new IllegalStateException("nosuchmethod " + mn);
+          }
+
+          if (Flags.isAccNative(neo.accessFlags)) {
+            var key = cls.concat("_").concat(mn).concat("_").concat(mt);
+            var nm = MetaSpace.resolveNativeMethod(key.getBytes());
+            if (nm == null) {
+              throw new IllegalStateException("missing " + key + " native method");
+            }
             si = nm.invoke(stacks, si);
             continue;
           }
 
-          // find method
-          if (!cls.equals(frame.clazz.name)) {
-            // TODO ...
-            throw new IllegalStateException();
-          }
-
-          var old = frame;
-          var neo = Resolver.resolveMethod(frame.clazz, mn, mt);
-          if (neo == null) {
-            throw new IllegalStateException("nosuchmethod " + mn);
-          }
           var nf = ee.createFrame(MetaSpace.resolveClass(neo.cls), neo);
           nf.returnPc = pc;
 

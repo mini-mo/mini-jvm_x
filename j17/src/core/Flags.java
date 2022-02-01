@@ -17,4 +17,8 @@ public abstract class Flags {
   public static boolean isAccPrivate(int flags) {
     return (flags & 0x0002) != 0;
   }
+
+  public static boolean isAccNative(int flags) {
+    return (flags & 0x0100) != 0;
+  }
 }

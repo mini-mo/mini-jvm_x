@@ -5,4 +5,6 @@ public class Thread implements Runnable {
   }
 
   public native void start();
+
+  public static native void sleep(long millis);
 }
