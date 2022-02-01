@@ -1,13 +1,8 @@
 package cls;
 
-import static core.Const.CONSTANT_Class;
-import static core.Const.CONSTANT_Fieldref;
-import static core.Const.CONSTANT_InterfaceMethodref;
-import static core.Const.CONSTANT_Methodref;
-import static core.Const.CONSTANT_NameAndType;
-import static core.Const.CONSTANT_Utf8;
-
 import core.Resolver;
+
+import static core.Const.*;
 
 public class ClassReader {
 
@@ -36,6 +31,11 @@ public class ClassReader {
         case CONSTANT_Class -> {
           cp[i] = new CpInfo(tag, Resolver.raw(raw, cur, 2));
           cur += 2;
+        }
+        case CONSTANT_Long -> {
+          cp[i] = new CpInfo(tag, Resolver.raw(raw, cur, 8));
+          cur += 8;
+          i++;
         }
         case CONSTANT_Utf8 -> {
           var len = Resolver.u2(raw, cur);

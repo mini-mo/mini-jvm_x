@@ -68,15 +68,37 @@ public class Interpreter {
           pc += 2;
           stacks[si++] = x;
         }
+        case OPC_LDC2_W -> {
+          int ldwIdx = Resolver.u2(code, pc);
+          pc += 2;
+          var cpInfo = cp[ldwIdx];
+          switch (cpInfo.tag) {
+            case CONSTANT_Long, CONSTANT_Double -> {
+              stacks[si++] = Resolver.u4(cpInfo.info);
+              stacks[si++] = Resolver.u4(cpInfo.info, 4);
+            }
+            default -> throw new IllegalStateException();
+          }
+        }
         case OPC_ILOAD -> {
           int idx = code[pc++] & 0xff;
           stacks[si++] = locals[idx];
+        }
+        case OPC_LLOAD -> {
+          int idx = code[pc++] & 0xff;
+          stacks[si++] = locals[idx];
+          stacks[si++] = locals[idx + 1];
         }
         case OPC_ILOAD_0, OPC_ILOAD_1, OPC_ILOAD_2, OPC_ILOAD_3 -> {
           stacks[si++] = locals[op - OPC_ILOAD_0];
         }
         case OPC_ISTORE -> {
           int idx = code[pc++] & 0xff;
+          locals[idx] = stacks[--si];
+        }
+        case OPC_LSTORE -> {
+          int idx = code[pc++] & 0xff;
+          locals[idx + 1] = stacks[--si];
           locals[idx] = stacks[--si];
         }
         case OPC_ISTORE_0, OPC_ISTORE_1, OPC_ISTORE_2, OPC_ISTORE_3 -> {
@@ -285,12 +307,38 @@ public class Interpreter {
         case OPC_ASTORE_0, OPC_ASTORE_1, OPC_ASTORE_2, OPC_ASTORE_3 -> {
           locals[op - OPC_ASTORE_0] = stacks[--si];
         }
+        case OPC_IASTORE -> {
+          int val = stacks[--si];
+          int idx = stacks[--si];
+          int point = stacks[--si];
+          Heap.setInt(point, 4 + (idx * 4), val);
+        }
+        case OPC_LASTORE -> {
+          long val = LongUtil.merge(stacks[--si], stacks[--si]);
+          int idx = stacks[--si];
+          int point = stacks[--si];
+          Heap.setLong(point, 4 + (idx * 8), val);
+        }
         case OPC_LLOAD_0, OPC_LLOAD_1, OPC_LLOAD_2, OPC_LLOAD_3 -> {
           stacks[si++] = locals[op - OPC_LLOAD_0];
           stacks[si++] = locals[op - OPC_LLOAD_0 + 1];
         }
         case OPC_ALOAD_0, OPC_ALOAD_1, OPC_ALOAD_2, OPC_ALOAD_3 -> {
           stacks[si++] = locals[op - OPC_ALOAD_0];
+        }
+        case OPC_IALOAD -> {
+          int idx = stacks[--si];
+          int point = stacks[--si];
+          int val = Heap.getInt(point, 4 + (idx * 4));
+          stacks[si++] = val;
+        }
+        case OPC_LALOAD -> {
+          int idx = stacks[--si];
+          int point = stacks[--si];
+          long val = Heap.getLong(point, 4 + (idx * 8));
+          int[] r = LongUtil.split(val);
+          stacks[si++] = r[0];
+          stacks[si++] = r[1];
         }
         case OPC_POP -> {
           si--;
@@ -307,6 +355,52 @@ public class Interpreter {
           var point = Heap.malloc(cls.size);
           Heap.setInt(point, -8, cls.offset); // make relation from instance to class
           stacks[si++] = point;
+        }
+        case OPC_NEWARRAY -> {
+          int count = stacks[--si];
+          if (count < 0) {
+            throw new NegativeArraySizeException();
+          }
+          var type = Resolver.u1(code, pc);
+          pc += 1;
+          int size = switch (type) {
+            case 4 ->
+                    //BOOLEAN
+                    count;
+            case 5 ->
+                    //CHAR
+                    count * 2;
+            case 6 ->
+                    //FLOAT
+                    count * 4;
+            case 7 ->
+                    //DOUBLE
+                    count * 8;
+            case 8 ->
+                    //BYTE
+                    count;
+            case 9 ->
+                    //SHORT
+                    count * 2;
+            case 10 ->
+                    //INT
+                    count * 4;
+            case 11 ->
+                    //LONG
+                    count * 8;
+            default -> throw new IllegalStateException();
+          };
+          int point = Heap.malloc(size);
+          Heap.setInt(point, 0, count);
+          stacks[si++] = point;
+        }
+        case OPC_ARRAYLENGTH -> {
+          int point = stacks[--si];
+          if (point == 0) {
+            throw new NullPointerException();
+          }
+          int length = Heap.getInt(point, 0);
+          stacks[si++] = length;
         }
         case OPC_GOTO -> {
           var offset = Resolver.s2(code, pc);

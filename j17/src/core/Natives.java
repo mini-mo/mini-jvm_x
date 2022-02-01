@@ -1,5 +1,7 @@
 package core;
 
+import utils.LongUtil;
+
 public abstract class Natives {
 
   // 停表计时, ms
@@ -12,8 +14,8 @@ public abstract class Natives {
     }));
 
     MetaSpace.registerNativeMethod("RT_println_(J)V".getBytes(), ((ostack, top) -> {
-      System.out.println(ostack[top - 1]);
-      return top - 1;
+      System.out.println(LongUtil.merge(ostack[top - 1], ostack[top - 2]));
+      return top - 2;
     }));
 
     MetaSpace.registerNativeMethod("RT_begin_()V".getBytes(), ((ostack, top) -> {
@@ -35,8 +37,8 @@ public abstract class Natives {
 
 
     MetaSpace.registerNativeMethod("java/io/NOutStream_println_(J)V".getBytes(), ((ostack, top) -> {
-      System.out.println(ostack[top - 1]);
-      return top - 1;
+      System.out.println(LongUtil.merge(ostack[top - 1], ostack[top - 2]));
+      return top - 3;
     }));
 
     MetaSpace.registerNativeMethod("java/lang/Thread_start_()V".getBytes(), (((ostack, top) -> {
