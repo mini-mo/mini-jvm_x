@@ -150,9 +150,9 @@ public abstract class ClassLoader {
       m.maxLocals = mi.maxLocals;
       m.maxStacks = mi.maxStacks;
       m.offset = len;
+      m.cls = cls.offset;
 
       if (mi.name.startsWith("<") || Flags.isAccStatic(mi.accessFlags) || Flags.isAccPrivate(mi.accessFlags)) {
-        m.cls = cls.offset;
         methods[len] = m;
         len++;
         continue;
@@ -163,14 +163,12 @@ public abstract class ClassLoader {
       for (var j = 0; j < sl; j++) {
         var tm = methods[j];
         if (tm.name.equals(m.name) && tm.descriptor.equals(m.descriptor) /* TODO access */) {
-          m.cls = tm.cls;
           methods[j] = m;
           override = true;
           break;
         }
       }
       if (!override) {
-        m.cls = cls.offset;
         methods[len] = m;
         len++;
       }
